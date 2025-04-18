@@ -2,6 +2,12 @@ import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
 
 import { DataRow } from '../data-row/data-row.entity'
 
+export interface DataColumn {
+  id: string
+  name: string
+  type: string
+}
+
 @Entity()
 export class DataTable {
   @PrimaryGeneratedColumn('uuid')
@@ -11,11 +17,7 @@ export class DataTable {
   name: string
 
   @Column('jsonb')
-  columns: {
-    id: string
-    name: string
-    type: string
-  }[]
+  columns: DataColumn[]
 
   @OneToMany(() => DataRow, (dataRow) => dataRow.dataTable)
   dataRows: DataRow[]
