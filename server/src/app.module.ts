@@ -9,6 +9,7 @@ import { DataTable } from './modules/data-table/data-table.entity'
 import { DataTableController } from './modules/data-table/data-table.controller'
 import { DataTableModule } from './modules/data-table/data-table.module'
 import { DataTableService } from './modules/data-table/data-table.service'
+import { EventsGateway } from './gateways/events.gateway'
 import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { UsersModule } from './modules/users/users.module'
@@ -34,6 +35,6 @@ import { UsersModule } from './modules/users/users.module'
     UsersModule,
   ],
   controllers: [AppController, DataTableController, DataRowController],
-  providers: [AppService, DataTableService, DataRowService],
+  providers: [AppService, DataTableService, DataRowService, EventsGateway],
 })
 export class AppModule {}
