@@ -1,7 +1,14 @@
-import { ConfigModule, ConfigService } from '@nestjs/config'
-
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
+import { ConfigModule } from '@nestjs/config'
+import { DataRow } from './modules/data-row/data-row.entity'
+import { DataRowController } from './modules/data-row/data-row.controller'
+import { DataRowModule } from './modules/data-row/data-row.module'
+import { DataRowService } from './modules/data-row/data-row.service'
+import { DataTable } from './modules/data-table/data-table.entity'
+import { DataTableController } from './modules/data-table/data-table.controller'
+import { DataTableModule } from './modules/data-table/data-table.module'
+import { DataTableService } from './modules/data-table/data-table.service'
 import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { UsersModule } from './modules/users/users.module'
@@ -11,23 +18,22 @@ import { UsersModule } from './modules/users/users.module'
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get('DB_HOST'),
-        port: +configService.get<number>('DB_PORT'),
-        username: configService.get('DB_USERNAME'),
-        password: configService.get('DB_PASSWORD'),
-        database: configService.get('DB_DATABASE'),
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: true, // 개발 환경에서만 true로 설정
-      }),
-      inject: [ConfigService],
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      host: 'localhost',
+      port: 5432,
+      username: 'postgres',
+      password: 'postgres',
+      database: 'postgres',
+      entities: [DataTable, DataRow],
+      synchronize: true, // 개발 환경에서만 true로 설정
     }),
+    TypeOrmModule.forFeature([DataTable, DataRow]),
+    DataTableModule,
+    DataRowModule,
     UsersModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController, DataTableController, DataRowController],
+  providers: [AppService, DataTableService, DataRowService],
 })
 export class AppModule {}
