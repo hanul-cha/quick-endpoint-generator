@@ -13,32 +13,19 @@ const showNavigation = computed(() => {
 </script>
 
 <template>
-  <NavigationBar v-if="showNavigation" />
-  <main :class="{ 'with-nav': showNavigation }">
-    <router-view />
-  </main>
+  <div class="min-h-screen bg-gray-50">
+    <NavigationBar v-if="showNavigation" />
+    <main :class="{ 'pt-16': showNavigation }" class="container mx-auto px-4">
+      <router-view />
+    </main>
+  </div>
 </template>
 
 <style>
-body {
-  margin: 0;
-  padding: 0;
-  font-family: Arial, sans-serif;
-  background-color: #f5f5f5;
-}
-
-main {
-  padding: 20px;
-}
-
-main.with-nav {
-  padding-top: 80px;
-}
-
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Avenir', 'Helvetica', 'Arial', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: #2c3e50;
+  @apply text-gray-800;
 }
 </style>

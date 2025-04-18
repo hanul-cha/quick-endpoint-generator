@@ -1,21 +1,40 @@
 <template>
-  <div class="chat-container">
-    <div class="connection-status" :class="{ connected: isConnected }">
+  <div class="max-w-2xl mx-auto p-5">
+    <div
+      :class="[
+        'text-center py-2 px-4 mb-4 rounded-lg text-white',
+        isConnected ? 'bg-green-500' : 'bg-red-500'
+      ]"
+    >
       {{ isConnected ? '연결됨' : '연결 끊김' }}
     </div>
-    <div class="messages" ref="messagesContainer">
-      <div v-for="(message, index) in messages" :key="index" class="message">
+    <div
+      ref="messagesContainer"
+      class="h-[400px] overflow-y-auto border border-gray-300 rounded-lg p-4 mb-5 bg-white"
+    >
+      <div
+        v-for="(message, index) in messages"
+        :key="index"
+        class="mb-3 p-2 bg-gray-100 rounded-lg"
+      >
         {{ message }}
       </div>
     </div>
-    <div class="input-container">
+    <div class="flex gap-3">
       <input
         v-model="newMessage"
         @keyup.enter="sendMessage"
         placeholder="메시지를 입력하세요..."
         :disabled="!isConnected"
+        class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
       />
-      <button @click="sendMessage" :disabled="!isConnected">전송</button>
+      <button
+        @click="sendMessage"
+        :disabled="!isConnected"
+        class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+      >
+        전송
+      </button>
     </div>
   </div>
 </template>
