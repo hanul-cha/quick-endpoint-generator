@@ -1,5 +1,6 @@
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
+import { AuthModule } from './modules/auth/auth.module'
 import { ConfigModule } from '@nestjs/config'
 import { DataRow } from './modules/data-row/data-row.entity'
 import { DataRowController } from './modules/data-row/data-row.controller'
@@ -12,6 +13,7 @@ import { DataTableService } from './modules/data-table/data-table.service'
 import { EventsGateway } from './gateways/events.gateway'
 import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
+import { User } from './modules/users/entities/user.entity'
 import { UsersModule } from './modules/users/users.module'
 
 @Module({
@@ -26,13 +28,14 @@ import { UsersModule } from './modules/users/users.module'
       username: 'postgres',
       password: 'postgres',
       database: 'postgres',
-      entities: [DataTable, DataRow],
+      entities: [DataTable, DataRow, User],
       synchronize: true, // 개발 환경에서만 true로 설정
     }),
     TypeOrmModule.forFeature([DataTable, DataRow]),
     DataTableModule,
     DataRowModule,
     UsersModule,
+    AuthModule,
   ],
   controllers: [AppController, DataTableController, DataRowController],
   providers: [AppService, DataTableService, DataRowService, EventsGateway],

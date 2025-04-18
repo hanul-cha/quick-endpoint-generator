@@ -3,6 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { DataRow } from './data-row.entity'
 import { DataTableService } from '../data-table/data-table.service'
+import {
+  PaginationOptions,
+  PaginatedResult,
+} from '../data-table/data-table.service'
 
 @Injectable()
 export class DataRowService {
@@ -12,10 +16,7 @@ export class DataRowService {
     private dataTableService: DataTableService,
   ) {}
 
-  async create(
-    dataTableId: string,
-    values: { columnId: string; value: any }[],
-  ) {
+  async create(dataTableId: string, values: Record<string, any>) {
     // 데이터 테이블이 존재하는지 확인
     const dataTable = await this.dataTableService.findOne(dataTableId)
     if (!dataTable) {
@@ -24,7 +25,7 @@ export class DataRowService {
 
     // 컬럼 ID가 모두 존재하는지 확인
     const columnIds = dataTable.columns.map((col) => col.id)
-    const valueColumnIds = values.map((val) => val.columnId)
+    const valueColumnIds = Object.keys(values)
     const invalidColumnIds = valueColumnIds.filter(
       (id) => !columnIds.includes(id),
     )
@@ -39,17 +40,71 @@ export class DataRowService {
     return await this.dataRowRepository.save(dataRow)
   }
 
-  async findAll(dataTableId: string) {
-    return await this.dataRowRepository.find({
+  async findAll(
+    dataTableId: string,
+    options?: PaginationOptions,
+  ): Promise<PaginatedResult<DataRow>> {
+    const { page = 1, limit = 10, offset = 0 } = options || {}
+    const skip = offset || (page - 1) * limit
+
+    const [items, total] = await this.dataRowRepository.findAndCount({
       where: { dataTableId },
+      skip,
+      take: limit,
+      order: { createdAt: 'DESC' },
     })
+
+    const totalPages = Math.ceil(total / limit)
+    const hasNextPage = skip + items.length < total
+    const hasPreviousPage = page > 1
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNextPage,
+      hasPreviousPage,
+      offset: skip,
+    }
+  }
+
+  async findByUserId(
+    userId: string,
+    options?: PaginationOptions,
+  ): Promise<PaginatedResult<DataRow>> {
+    const { page = 1, limit = 10, offset = 0 } = options || {}
+    const skip = offset || (page - 1) * limit
+
+    const [items, total] = await this.dataRowRepository.findAndCount({
+      where: { userId },
+      skip,
+      take: limit,
+      order: { createdAt: 'DESC' },
+    })
+
+    const totalPages = Math.ceil(total / limit)
+    const hasNextPage = skip + items.length < total
+    const hasPreviousPage = page > 1
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNextPage,
+      hasPreviousPage,
+      offset: skip,
+    }
   }
 
   async findOne(id: string) {
     return await this.dataRowRepository.findOne({ where: { id } })
   }
 
-  async update(id: string, values: { columnId: string; value: any }[]) {
+  async update(id: string, values: Record<string, any>) {
     const dataRow = await this.findOne(id)
     if (!dataRow) {
       throw new Error('DataRow not found')
@@ -58,7 +113,7 @@ export class DataRowService {
     // 데이터 테이블의 컬럼 ID가 모두 존재하는지 확인
     const dataTable = await this.dataTableService.findOne(dataRow.dataTableId)
     const columnIds = dataTable.columns.map((col) => col.id)
-    const valueColumnIds = values.map((val) => val.columnId)
+    const valueColumnIds = Object.keys(values)
     const invalidColumnIds = valueColumnIds.filter(
       (id) => !columnIds.includes(id),
     )

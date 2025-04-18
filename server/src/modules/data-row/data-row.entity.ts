@@ -21,10 +21,10 @@ export class DataRow {
   dataTable: DataTable
 
   @Column('jsonb')
-  values: {
-    columnId: string
-    value: any
-  }[]
+  values: Record<string, any>
+
+  @Column('uuid', { nullable: true })
+  userId: string
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date

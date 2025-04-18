@@ -1,7 +1,22 @@
-import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common'
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common'
 import { DataRowService } from './data-row.service'
+import { PaginationOptions } from '../data-table/data-table.service'
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
+import { CurrentUser } from '../auth/decorators/current-user.decorator'
+import { User } from '../users/entities/user.entity'
 
 @Controller('data-rows')
+@UseGuards(JwtAuthGuard)
 export class DataRowController {
   constructor(private readonly dataRowService: DataRowService) {}
 
@@ -10,15 +25,36 @@ export class DataRowController {
     @Body()
     body: {
       dataTableId: string
-      values: { columnId: string; value: any }[]
+      values: Record<string, any>
     },
   ) {
     return await this.dataRowService.create(body.dataTableId, body.values)
   }
 
   @Get('table/:dataTableId')
-  async findAll(@Param('dataTableId') dataTableId: string) {
-    return await this.dataRowService.findAll(dataTableId)
+  async findAll(
+    @Param('dataTableId') dataTableId: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    const options: PaginationOptions = {
+      page: page ? parseInt(page.toString()) : 1,
+      limit: limit ? parseInt(limit.toString()) : 10,
+    }
+    return await this.dataRowService.findAll(dataTableId, options)
+  }
+
+  @Get('my')
+  async findByCurrentUser(
+    @CurrentUser() user: User,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    const options: PaginationOptions = {
+      page: page ? parseInt(page.toString()) : 1,
+      limit: limit ? parseInt(limit.toString()) : 10,
+    }
+    return await this.dataRowService.findByUserId(user.id.toString(), options)
   }
 
   @Get(':id')
@@ -29,7 +65,10 @@ export class DataRowController {
   @Put(':id')
   async update(
     @Param('id') id: string,
-    @Body() body: { values: { columnId: string; value: any }[] },
+    @Body()
+    body: {
+      values: Record<string, any>
+    },
   ) {
     return await this.dataRowService.update(id, body.values)
   }
