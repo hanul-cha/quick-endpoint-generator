@@ -3,7 +3,7 @@
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-3xl font-bold">Tables</h1>
       <button
-        @click="showCreateModal = true"
+        @click="showModal = true"
         class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
       >
         Create Table
@@ -20,7 +20,7 @@
         <p class="mt-1 text-sm text-gray-500">Get started by creating a new table.</p>
         <div class="mt-6">
           <button
-            @click="showCreateModal = true"
+            @click="showModal = true"
             class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
             Create Table
@@ -89,15 +89,15 @@
       </div>
     </div>
 
-    <!-- Create Table Modal -->
+    <!-- Create/Edit Table Modal -->
     <div
-      v-if="showCreateModal"
+      v-if="showModal"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
       @click.self="closeModal"
     >
       <div class="bg-white rounded-lg p-6 w-full max-w-2xl border border-gray-200">
         <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-semibold">Create New Table</h2>
+          <h2 class="text-xl font-semibold">{{ isEditing ? 'Edit' : 'Create New' }} Table</h2>
           <button
             @click="closeModal"
             class="text-gray-500 hover:text-gray-700"
@@ -112,24 +112,40 @@
           <div>
             <label class="block text-sm font-medium text-gray-700">Table Name</label>
             <input
-              v-model="newTable.name"
+              v-model="editingTable.name"
               type="text"
-              class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none"
+              :class="[
+                'mt-1 block w-full rounded-md border px-3 py-2 focus:outline-none',
+                errors.tableName
+                  ? 'border-red-500 focus:border-red-500'
+                  : 'border-gray-300 focus:border-indigo-500'
+              ]"
             />
+            <p v-if="errors.tableName" class="mt-1 text-sm text-red-600">
+              {{ errors.tableName }}
+            </p>
           </div>
 
           <!-- 컬럼 추가 섹션 -->
           <div class="border-t pt-4">
             <h3 class="text-lg font-medium mb-4">Columns</h3>
             <div class="space-y-4">
-              <div v-for="(column, index) in newTable.columns" :key="index" class="flex gap-4 items-end">
+              <div v-for="(column, index) in editingTable.columns" :key="index" class="flex gap-4 items-start">
                 <div class="flex-1">
                   <label class="block text-sm font-medium text-gray-700">Column Name</label>
                   <input
                     v-model="column.name"
                     type="text"
-                    class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none"
+                    :class="[
+                      'mt-1 block w-full rounded-md border px-3 py-2 focus:outline-none',
+                      errors.columns[index]
+                        ? 'border-red-500 focus:border-red-500'
+                        : 'border-gray-300 focus:border-indigo-500'
+                    ]"
                   />
+                  <p v-if="errors.columns[index]" class="mt-1 text-sm text-red-600">
+                    {{ errors.columns[index] }}
+                  </p>
                 </div>
                 <div class="flex-1">
                   <label class="block text-sm font-medium text-gray-700">Type</label>
@@ -146,7 +162,7 @@
                 </div>
                 <button
                   @click="removeColumn(index)"
-                  class="px-3 py-2 text-red-600 hover:text-red-800"
+                  class="px-3 py-2 text-red-600 hover:text-red-800 mt-7"
                 >
                   Remove
                 </button>
@@ -168,10 +184,10 @@
               Cancel
             </button>
             <button
-              @click="createTable"
+              @click="saveTable"
               class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
             >
-              Create Table
+              {{ isEditing ? 'Save Changes' : 'Create Table' }}
             </button>
           </div>
         </div>
@@ -206,23 +222,30 @@ const tables = ref<PaginatedResponse<DataTable>>({
   hasPreviousPage: false,
   offset: 0
 })
-const showCreateModal = ref(false)
-const newTable = ref<Partial<DataTable>>({
+const showModal = ref(false)
+const isEditing = ref(false)
+const editingTable = ref<Partial<DataTable>>({
   name: '',
   columns: []
 })
 
+const errors = ref({
+  tableName: '',
+  columns: [] as string[]
+})
+
 const closeModal = () => {
-  showCreateModal.value = false
+  showModal.value = false
+  isEditing.value = false
   // 폼 초기화
-  newTable.value = {
+  editingTable.value = {
     name: '',
     columns: []
   }
 }
 
 const handleEscKey = (event: KeyboardEvent) => {
-  if (event.key === 'Escape' && showCreateModal.value) {
+  if (event.key === 'Escape' && showModal.value) {
     closeModal()
   }
 }
@@ -236,10 +259,10 @@ onUnmounted(() => {
 })
 
 const addColumn = () => {
-  if (!newTable.value.columns) {
-    newTable.value.columns = []
+  if (!editingTable.value.columns) {
+    editingTable.value.columns = []
   }
-  newTable.value.columns.push({
+  editingTable.value.columns.push({
     id: crypto.randomUUID(),
     name: '',
     type: 'string'
@@ -247,22 +270,63 @@ const addColumn = () => {
 }
 
 const removeColumn = (index: number) => {
-  newTable.value.columns?.splice(index, 1)
+  editingTable.value.columns?.splice(index, 1)
 }
 
-const createTable = async () => {
+const validateForm = () => {
+  errors.value = {
+    tableName: '',
+    columns: []
+  }
+
+  let isValid = true
+
+  // 테이블 이름 검사
+  if (!editingTable.value.name?.trim()) {
+    errors.value.tableName = '테이블 이름은 필수입니다.'
+    isValid = false
+  }
+
+  // 컬럼 이름 검사
+  editingTable.value.columns?.forEach((column, index) => {
+    if (!column.name?.trim()) {
+      errors.value.columns[index] = '컬럼 이름은 필수입니다.'
+      isValid = false
+    } else {
+      errors.value.columns[index] = ''
+    }
+  })
+
+  return isValid
+}
+
+const saveTable = async () => {
+  if (!validateForm()) {
+    return
+  }
+
   try {
-    const table = await tableApi.createTable(newTable.value)
-    tables.value.items.push(table)
+    if (isEditing.value && editingTable.value.id) {
+      const updatedTable = await tableApi.updateTable(editingTable.value.id, editingTable.value)
+      const index = tables.value.items.findIndex(t => t.id === updatedTable.id)
+      if (index !== -1) {
+        tables.value.items[index] = updatedTable
+      }
+    } else {
+      const table = await tableApi.createTable(editingTable.value)
+      tables.value.items.push(table)
+    }
     closeModal()
   } catch (error) {
-    console.error('Failed to create table:', error)
-    alert('테이블 생성 중 오류가 발생했습니다.')
+    console.error(`Failed to ${isEditing.value ? 'update' : 'create'} table:`, error)
+    alert(`테이블 ${isEditing.value ? '수정' : '생성'} 중 오류가 발생했습니다.`)
   }
 }
 
 const editTable = (table: DataTable) => {
-  // TODO: 테이블 편집 기능 구현
+  isEditing.value = true
+  editingTable.value = { ...table, id: table.id }
+  showModal.value = true
 }
 
 const deleteTable = async (tableId: string) => {
@@ -287,3 +351,33 @@ const loadTables = async (page?: number) => {
 
 loadTables()
 </script>
+
+<style scoped>
+.table-container {
+  @apply overflow-x-auto;
+}
+
+table {
+  @apply min-w-full divide-y divide-gray-200;
+}
+
+th {
+  @apply px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50;
+}
+
+td {
+  @apply px-6 py-4 whitespace-nowrap text-sm;
+}
+
+input:focus, select:focus {
+  @apply ring-2 ring-opacity-50;
+}
+
+input.border-red-500:focus {
+  @apply ring-red-500;
+}
+
+input.border-gray-300:focus {
+  @apply ring-indigo-500;
+}
+</style>
