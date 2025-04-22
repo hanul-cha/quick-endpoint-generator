@@ -2,8 +2,6 @@
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import NavigationBar from './components/NavigationBar.vue';
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
 import WebSocketChat from './components/WebSocketChat.vue'
 
 const route = useRoute();

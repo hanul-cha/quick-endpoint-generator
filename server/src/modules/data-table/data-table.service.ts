@@ -30,7 +30,7 @@ export class DataTableService {
   async create(
     name: string,
     columns: { id: string; name: string; type: string }[],
-    userId?: string,
+    userId?: number,
   ) {
     const dataTable = this.dataTableRepository.create({
       name,
@@ -69,7 +69,7 @@ export class DataTableService {
   }
 
   async findByUserId(
-    userId: string,
+    userId: number,
     options?: PaginationOptions,
   ): Promise<PaginatedResult<DataTable>> {
     const { page = 1, limit = 10, offset = 0 } = options || {}
@@ -106,7 +106,7 @@ export class DataTableService {
     id: string,
     name: string,
     columns: { id: string; name: string; type: string }[],
-    userId?: string,
+    userId?: number,
   ) {
     const updateData: Partial<DataTable> = { name, columns }
     if (userId !== undefined) {

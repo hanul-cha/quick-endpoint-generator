@@ -28,11 +28,7 @@ export class DataTableController {
     },
     @CurrentUser() user: User,
   ) {
-    return await this.dataTableService.create(
-      body.name,
-      body.columns,
-      user.id.toString(),
-    )
+    return await this.dataTableService.create(body.name, body.columns, user.id)
   }
 
   @Get()
@@ -54,7 +50,7 @@ export class DataTableController {
       page: page ? parseInt(page.toString()) : 1,
       limit: limit ? parseInt(limit.toString()) : 10,
     }
-    return await this.dataTableService.findByUserId(user.id.toString(), options)
+    return await this.dataTableService.findByUserId(user.id, options)
   }
 
   @Get(':id')
@@ -76,7 +72,7 @@ export class DataTableController {
       id,
       body.name,
       body.columns,
-      user.id.toString(),
+      user.id,
     )
   }
 

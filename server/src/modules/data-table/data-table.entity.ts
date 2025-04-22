@@ -19,8 +19,8 @@ export class DataTable {
   @Column('jsonb')
   columns: DataColumn[]
 
-  @Column('uuid', { nullable: true })
-  userId: string
+  @Column({ nullable: true })
+  userId: number
 
   @OneToMany(() => DataRow, (dataRow) => dataRow.dataTable)
   dataRows: DataRow[]
