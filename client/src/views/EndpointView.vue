@@ -1,19 +1,19 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-6">
+  <div class="container px-4 py-8 mx-auto">
+    <div class="flex items-center justify-between mb-6">
       <h1 class="text-3xl font-bold">Endpoints</h1>
       <button
         @click="showModal = true"
-        class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+        class="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
       >
         Create Endpoint
       </button>
     </div>
 
     <!-- 기존 엔드포인트 목록 -->
-    <div class="bg-white rounded-lg p-6 border border-gray-200">
-      <div v-if="endpoints.items.length === 0" class="text-center py-12">
-        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="p-6 bg-white border border-gray-200 rounded-lg">
+      <div v-if="endpoints.items.length === 0" class="py-12 text-center">
+        <svg class="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
         </svg>
         <h3 class="mt-2 text-sm font-medium text-gray-900">No endpoints</h3>
@@ -21,7 +21,7 @@
         <div class="mt-6">
           <button
             @click="showModal = true"
-            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
             Create Endpoint
           </button>
@@ -29,8 +29,8 @@
       </div>
 
       <div v-else class="space-y-6">
-        <div v-for="endpoint in endpoints.items" :key="endpoint.id" class="border rounded-lg p-4">
-          <div class="flex justify-between items-center mb-4">
+        <div v-for="endpoint in endpoints.items" :key="endpoint.id" class="p-4 border rounded-lg">
+          <div class="flex items-center justify-between mb-4">
             <div>
               <h3 class="text-lg font-medium">{{ endpoint.name }}</h3>
               <p class="text-sm text-gray-500">{{ endpoint.method }} | Schema: {{ endpoint.schema?.name }}</p>
@@ -53,7 +53,7 @@
         </div>
 
         <!-- 페이지네이션 -->
-        <div v-if="endpoints.totalPages > 0" class="flex justify-between items-center mt-4">
+        <div v-if="endpoints.totalPages > 0" class="flex items-center justify-between mt-4">
           <button
             @click="loadEndpoints(endpoints.page - 1)"
             :disabled="!endpoints.hasPreviousPage"
@@ -78,11 +78,11 @@
     <!-- Create/Edit Endpoint Modal -->
     <div
       v-if="showModal"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
       @click.self="closeModal"
     >
-      <div class="bg-white rounded-lg p-6 w-full max-w-2xl border border-gray-200">
-        <div class="flex justify-between items-center mb-4">
+      <div class="w-full max-w-2xl p-6 bg-white border border-gray-200 rounded-lg">
+        <div class="flex items-center justify-between mb-4">
           <h2 class="text-xl font-semibold">{{ isEditing ? 'Edit' : 'Create New' }} Endpoint</h2>
           <button
             @click="closeModal"
@@ -153,7 +153,7 @@
             </p>
           </div>
 
-          <div class="flex justify-end space-x-3 mt-6">
+          <div class="flex justify-end mt-6 space-x-3">
             <button
               @click="closeModal"
               class="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
@@ -162,7 +162,7 @@
             </button>
             <button
               @click="saveEndpoint"
-              class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+              class="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
             >
               {{ isEditing ? 'Save Changes' : 'Create Endpoint' }}
             </button>

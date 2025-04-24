@@ -10,6 +10,8 @@ import { DataTable } from './modules/data-table/data-table.entity'
 import { DataTableController } from './modules/data-table/data-table.controller'
 import { DataTableModule } from './modules/data-table/data-table.module'
 import { DataTableService } from './modules/data-table/data-table.service'
+import { Endpoint } from './modules/endpoint/endpoint.entity'
+import { EndpointModule } from './modules/endpoint/endpoint.module'
 import { EventsGateway } from './gateways/events.gateway'
 import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
@@ -28,14 +30,15 @@ import { UsersModule } from './modules/users/users.module'
       username: 'postgres',
       password: 'postgres',
       database: 'postgres',
-      entities: [DataTable, DataRow, User],
+      entities: [DataTable, DataRow, User, Endpoint],
       synchronize: true, // 개발 환경에서만 true로 설정
     }),
-    TypeOrmModule.forFeature([DataTable, DataRow]),
+    TypeOrmModule.forFeature([DataTable, DataRow, Endpoint]),
     DataTableModule,
     DataRowModule,
     UsersModule,
     AuthModule,
+    EndpointModule,
   ],
   controllers: [AppController, DataTableController, DataRowController],
   providers: [AppService, DataTableService, DataRowService, EventsGateway],

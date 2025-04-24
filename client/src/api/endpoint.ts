@@ -1,5 +1,16 @@
 import type { Endpoint } from '@/types/endpoint'
-import { api } from '@/api/api'
+import { api } from './client'
+
+interface PaginatedResponse<T> {
+  items: T[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+  hasNextPage: boolean
+  hasPreviousPage: boolean
+  offset: number
+}
 
 interface EndpointListParams {
   page?: number
@@ -7,22 +18,25 @@ interface EndpointListParams {
 }
 
 export const endpointApi = {
-  async getMyEndpoints(params: EndpointListParams = {}) {
-    const response = await api.get('/endpoints', { params })
-    return response.data
+  async getMyEndpoints(params: EndpointListParams = {}): Promise<PaginatedResponse<Endpoint>> {
+    const searchParams = new URLSearchParams()
+    if (params.page) searchParams.append('page', params.page.toString())
+    if (params.limit) searchParams.append('limit', params.limit.toString())
+    const response = await api.get<PaginatedResponse<Endpoint>>(`/endpoints/my?${searchParams.toString()}`)
+    return response
   },
 
   async createEndpoint(data: Partial<Endpoint>) {
-    const response = await api.post('/endpoints', data)
-    return response.data
+    const response = await api.post<Endpoint>('/endpoints', data)
+    return response
   },
 
   async updateEndpoint(id: string, data: Partial<Endpoint>) {
-    const response = await api.put(`/endpoints/${id}`, data)
-    return response.data
+    const response = await api.put<Endpoint>(`/endpoints/${id}`, data)
+    return response
   },
 
   async deleteEndpoint(id: string) {
-    await api.delete(`/endpoints/${id}`)
+    await api.delete<void>(`/endpoints/${id}`)
   }
 }
