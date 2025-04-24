@@ -2,8 +2,8 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Body,
-  Patch,
   Param,
   Delete,
   UseGuards,
@@ -61,7 +61,7 @@ export class EndpointController {
     return await this.endpointService.findOne(id)
   }
 
-  @Patch(':id')
+  @Put(':id')
   async update(
     @Param('id') id: string,
     @Body() updateEndpointDto: UpdateEndpointDto,
@@ -71,7 +71,7 @@ export class EndpointController {
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return await this.endpointService.remove(id)
+  async remove(@Param('id') id: string, @CurrentUser() user: User) {
+    return await this.endpointService.remove(id, user.id)
   }
 }

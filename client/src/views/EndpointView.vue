@@ -33,7 +33,7 @@
           <div class="flex items-center justify-between mb-4">
             <div>
               <h3 class="text-lg font-medium">{{ endpoint.name }}</h3>
-              <p class="text-sm text-gray-500">{{ endpoint.method }} | Schema: {{ endpoint.schema?.name }}</p>
+              <p class="text-sm text-gray-500">{{ endpoint.method }} | {{ endpoint.parameterType }}</p>
             </div>
             <div class="space-x-2">
               <button
@@ -134,22 +134,82 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700">Schema</label>
+            <label class="block text-sm font-medium text-gray-700">Parameter Type</label>
             <select
-              v-model="editingEndpoint.schemaId"
+              v-model="editingEndpoint.parameterType"
               :class="[
                 'mt-1 block w-full rounded-md border px-3 py-2 focus:outline-none',
-                errors.schemaId
+                errors.parameterType
                   ? 'border-red-500 focus:border-red-500'
                   : 'border-gray-300 focus:border-indigo-500'
               ]"
             >
-              <option v-for="schema in schemas" :key="schema.id" :value="schema.id">
-                {{ schema.name }}
-              </option>
+              <option value="body">Body</option>
+              <option value="query">Query</option>
             </select>
-            <p v-if="errors.schemaId" class="mt-1 text-sm text-red-600">
-              {{ errors.schemaId }}
+            <p v-if="errors.parameterType" class="mt-1 text-sm text-red-600">
+              {{ errors.parameterType }}
+            </p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Script</label>
+            <textarea
+              v-model="editingEndpoint.script"
+              rows="4"
+              :class="[
+                'mt-1 block w-full rounded-md border px-3 py-2 focus:outline-none',
+                errors.script
+                  ? 'border-red-500 focus:border-red-500'
+                  : 'border-gray-300 focus:border-indigo-500'
+              ]"
+            ></textarea>
+            <p v-if="errors.script" class="mt-1 text-sm text-red-600">
+              {{ errors.script }}
+            </p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Parameter</label>
+            <div class="mt-4 space-y-4">
+              <div v-for="(field, index) in parameterFields" :key="index" class="grid grid-cols-[1fr,1fr,auto] gap-4 items-start">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700">Key</label>
+                  <input
+                    v-model="field.key"
+                    type="text"
+                    class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:border-indigo-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700">Type</label>
+                  <select
+                    v-model="field.type"
+                    class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:border-indigo-500 focus:outline-none"
+                  >
+                    <option value="String">String</option>
+                    <option value="Number">Number</option>
+                    <option value="Boolean">Boolean</option>
+                    <option value="Object">Object</option>
+                    <option value="Array">Array</option>
+                  </select>
+                </div>
+                <button
+                  @click="removeField(index)"
+                  class="text-red-600 mt-7 hover:text-red-800 whitespace-nowrap"
+                >
+                  Remove
+                </button>
+              </div>
+              <button
+                @click="addField"
+                class="inline-flex items-center px-3 py-2 text-sm font-medium text-indigo-600 border border-indigo-600 rounded-md hover:bg-indigo-50"
+              >
+                Add Field
+              </button>
+            </div>
+            <p v-if="errors.parameter" class="mt-1 text-sm text-red-600">
+              {{ errors.parameter }}
             </p>
           </div>
 
@@ -175,10 +235,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import type { Endpoint } from '@/types/endpoint'
-import type { DataTable } from '@/types/data-table'
+import type { Endpoint, Parameter, ParameterFieldWithKey, ParameterType } from '@/types/endpoint'
 import { endpointApi } from '@/api/endpoint'
-import { tableApi } from '@/api/table'
 
 interface PaginatedResponse<T> {
   items: T[]
@@ -202,19 +260,45 @@ const endpoints = ref<PaginatedResponse<Endpoint>>({
   offset: 0
 })
 const showModal = ref(false)
-const schemas = ref<DataTable[]>([])
 const isEditing = ref(false)
 const editingEndpoint = ref<Partial<Endpoint>>({
   name: '',
   method: 'GET',
-  schemaId: ''
+  parameterType: 'body',
+  script: '',
+  parameter: {}
 })
+
+const parameterFields = ref<ParameterFieldWithKey[]>([])
 
 const errors = ref({
   name: '',
   method: '',
-  schemaId: ''
+  parameterType: '',
+  script: '',
+  parameter: ''
 })
+
+const addField = () => {
+  parameterFields.value.push({
+    key: '',
+    type: 'String'
+  })
+}
+
+const removeField = (index: number) => {
+  parameterFields.value.splice(index, 1)
+}
+
+const updateParameter = () => {
+  const parameterObj: Parameter = {}
+  for (const field of parameterFields.value) {
+    if (field.key.trim()) {
+      parameterObj[field.key] = field.type
+    }
+  }
+  editingEndpoint.value.parameter = parameterObj
+}
 
 const closeModal = () => {
   showModal.value = false
@@ -222,12 +306,17 @@ const closeModal = () => {
   editingEndpoint.value = {
     name: '',
     method: 'GET',
-    schemaId: ''
+    parameterType: 'body',
+    script: '',
+    parameter: {}
   }
+  parameterFields.value = []
   errors.value = {
     name: '',
     method: '',
-    schemaId: ''
+    parameterType: '',
+    script: '',
+    parameter: ''
   }
 }
 
@@ -240,22 +329,11 @@ const handleEscKey = (event: KeyboardEvent) => {
 onMounted(() => {
   document.addEventListener('keydown', handleEscKey)
   loadEndpoints()
-  loadSchemas()
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleEscKey)
 })
-
-const loadSchemas = async () => {
-  try {
-    const response = await tableApi.getMyTables({ page: 1, limit: 100 })
-    schemas.value = response.items
-  } catch (error) {
-    console.error('Failed to load schemas:', error)
-    alert('스키마 목록을 불러오는 중 오류가 발생했습니다.')
-  }
-}
 
 const loadEndpoints = async (page?: number) => {
   try {
@@ -284,8 +362,15 @@ const editEndpoint = (endpoint: Endpoint) => {
     id: endpoint.id,
     name: endpoint.name,
     method: endpoint.method,
-    schemaId: endpoint.schemaId
+    parameterType: endpoint.parameterType,
+    script: endpoint.script,
+    parameter: endpoint.parameter
   }
+  // parameter 객체를 fields 배열로 변환
+  parameterFields.value = Object.entries(endpoint.parameter || {}).map(([key, type]) => ({
+    key,
+    type
+  }))
   showModal.value = true
 }
 
@@ -307,7 +392,9 @@ const validateForm = () => {
   errors.value = {
     name: '',
     method: '',
-    schemaId: ''
+    parameterType: '',
+    script: '',
+    parameter: ''
   }
 
   let isValid = true
@@ -322,9 +409,18 @@ const validateForm = () => {
     isValid = false
   }
 
-  if (!editingEndpoint.value.schemaId) {
-    errors.value.schemaId = '스키마 선택은 필수입니다.'
+  if (!editingEndpoint.value.parameterType) {
+    errors.value.parameterType = '파라미터 타입은 필수입니다.'
     isValid = false
+  }
+
+  // 파라미터 필드 유효성 검사
+  for (const field of parameterFields.value) {
+    if (!field.key.trim()) {
+      errors.value.parameter = '모든 파라미터는 키 값이 있어야 합니다.'
+      isValid = false
+      break
+    }
   }
 
   return isValid
@@ -334,6 +430,9 @@ const saveEndpoint = async () => {
   if (!validateForm()) {
     return
   }
+
+  // 파라미터 업데이트
+  updateParameter()
 
   try {
     if (isEditing.value && editingEndpoint.value.id) {
@@ -358,7 +457,6 @@ const saveEndpoint = async () => {
 
 // 초기 데이터 로드
 loadEndpoints()
-loadSchemas()
 </script>
 
 <style scoped>
@@ -366,15 +464,15 @@ loadSchemas()
   @apply overflow-x-auto;
 }
 
-input:focus, select:focus {
+input:focus, select:focus, textarea:focus {
   @apply ring-2 ring-opacity-50;
 }
 
-input.border-red-500:focus, select.border-red-500:focus {
+input.border-red-500:focus, select.border-red-500:focus, textarea.border-red-500:focus {
   @apply ring-red-500;
 }
 
-input.border-gray-300:focus, select.border-gray-300:focus {
+input.border-gray-300:focus, select.border-gray-300:focus, textarea.border-gray-300:focus {
   @apply ring-indigo-500;
 }
 </style>

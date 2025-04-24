@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { Endpoint } from './endpoint.entity'
@@ -76,7 +76,11 @@ export class EndpointService {
   }
 
   async findOne(id: string) {
-    return await this.endpointRepository.findOne({ where: { id } })
+    const endpoint = await this.endpointRepository.findOne({ where: { id } })
+    if (!endpoint) {
+      throw new NotFoundException(`Endpoint with ID "${id}" not found`)
+    }
+    return endpoint
   }
 
   async update(
@@ -84,6 +88,11 @@ export class EndpointService {
     updateEndpointDto: UpdateEndpointDto,
     userId: number,
   ) {
+    const endpoint = await this.findOne(id)
+    if (endpoint.userId !== userId) {
+      throw new NotFoundException(`Endpoint with ID "${id}" not found`)
+    }
+
     const updateData = {
       ...updateEndpointDto,
       userId,
@@ -93,7 +102,12 @@ export class EndpointService {
     return await this.findOne(id)
   }
 
-  async remove(id: string) {
+  async remove(id: string, userId: number) {
+    const endpoint = await this.findOne(id)
+    if (endpoint.userId !== userId) {
+      throw new NotFoundException(`Endpoint with ID "${id}" not found`)
+    }
+
     return await this.endpointRepository.delete(id)
   }
 }
