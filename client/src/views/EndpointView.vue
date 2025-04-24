@@ -33,7 +33,7 @@
           <div class="flex items-center justify-between mb-4">
             <div>
               <h3 class="text-lg font-medium">{{ endpoint.name }}</h3>
-              <p class="text-sm text-gray-500">{{ endpoint.method }} | {{ endpoint.parameterType }}</p>
+              <p class="text-sm text-gray-500">{{ endpoint.method }}</p>
             </div>
             <div class="space-x-2">
               <button
@@ -130,25 +130,6 @@
             </select>
             <p v-if="errors.method" class="mt-1 text-sm text-red-600">
               {{ errors.method }}
-            </p>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Parameter Type</label>
-            <select
-              v-model="editingEndpoint.parameterType"
-              :class="[
-                'mt-1 block w-full rounded-md border px-3 py-2 focus:outline-none',
-                errors.parameterType
-                  ? 'border-red-500 focus:border-red-500'
-                  : 'border-gray-300 focus:border-indigo-500'
-              ]"
-            >
-              <option value="body">Body</option>
-              <option value="query">Query</option>
-            </select>
-            <p v-if="errors.parameterType" class="mt-1 text-sm text-red-600">
-              {{ errors.parameterType }}
             </p>
           </div>
 
@@ -264,7 +245,6 @@ const isEditing = ref(false)
 const editingEndpoint = ref<Partial<Endpoint>>({
   name: '',
   method: 'GET',
-  parameterType: 'body',
   script: '',
   parameter: {}
 })
@@ -306,7 +286,6 @@ const closeModal = () => {
   editingEndpoint.value = {
     name: '',
     method: 'GET',
-    parameterType: 'body',
     script: '',
     parameter: {}
   }
@@ -362,7 +341,6 @@ const editEndpoint = (endpoint: Endpoint) => {
     id: endpoint.id,
     name: endpoint.name,
     method: endpoint.method,
-    parameterType: endpoint.parameterType,
     script: endpoint.script,
     parameter: endpoint.parameter
   }
@@ -406,11 +384,6 @@ const validateForm = () => {
 
   if (!editingEndpoint.value.method) {
     errors.value.method = 'HTTP 메소드는 필수입니다.'
-    isValid = false
-  }
-
-  if (!editingEndpoint.value.parameterType) {
-    errors.value.parameterType = '파라미터 타입은 필수입니다.'
     isValid = false
   }
 

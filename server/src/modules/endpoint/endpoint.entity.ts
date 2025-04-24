@@ -1,5 +1,7 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
 
+import { GlobalPrimitive } from 'src/app.types'
+
 @Entity()
 export class Endpoint {
   @PrimaryGeneratedColumn('uuid')
@@ -18,17 +20,10 @@ export class Endpoint {
   script: string
 
   @Column({
-    type: 'enum',
-    enum: ['body', 'query'],
-    default: 'body',
-  })
-  parameterType: 'body' | 'query'
-
-  @Column({
     type: 'json',
     nullable: true,
   })
-  parameter: object
+  parameter: Record<string, GlobalPrimitive>
 
   @Column({
     type: 'enum',

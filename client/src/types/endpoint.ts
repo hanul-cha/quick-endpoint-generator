@@ -15,7 +15,6 @@ export interface Endpoint {
   name: string
   userId: number
   script?: string
-  parameterType: 'body' | 'query'
   parameter?: Parameter
   method: 'GET' | 'POST' | 'PUT' | 'DELETE'
   createdAt: Date

@@ -1,10 +1,6 @@
-import {
-  IsEnum,
-  IsNotEmpty,
-  IsObject,
-  IsOptional,
-  IsString,
-} from 'class-validator'
+import { IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator'
+
+import { GlobalPrimitive } from 'src/app.types'
 
 export class CreateEndpointDto {
   @IsString()
@@ -15,11 +11,7 @@ export class CreateEndpointDto {
   @IsOptional()
   script?: string
 
-  @IsEnum(['body', 'query'])
-  @IsNotEmpty()
-  parameterType: 'body' | 'query'
-
   @IsObject()
   @IsOptional()
-  parameter?: object
+  parameter?: Record<string, GlobalPrimitive>
 }

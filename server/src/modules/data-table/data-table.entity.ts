@@ -1,11 +1,12 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
 
 import { DataRow } from '../data-row/data-row.entity'
+import { GlobalPrimitive } from 'src/app.types'
 
 export interface DataColumn {
   id: string
   name: string
-  type: string
+  type: GlobalPrimitive
 }
 
 @Entity()
