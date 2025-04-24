@@ -198,7 +198,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import type { DataTable, DataColumn } from '../types/data-table'
+import type { DataTable } from '../types/data-table'
 import { tableApi } from '../api/table'
 
 interface PaginatedResponse<T> {
