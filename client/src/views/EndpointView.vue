@@ -446,7 +446,7 @@ const saveEndpoint = async () => {
       }
     } else {
       const endpoint = await endpointApi.createEndpoint(editingEndpoint.value)
-      endpoints.value.items.push(endpoint)
+      endpoints.value.items.unshift(endpoint)
     }
     closeModal()
   } catch (error) {

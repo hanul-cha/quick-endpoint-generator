@@ -314,7 +314,7 @@ const saveTable = async () => {
       }
     } else {
       const table = await tableApi.createTable(editingTable.value)
-      tables.value.items.push(table)
+      tables.value.items.unshift(table)
     }
     closeModal()
   } catch (error) {
