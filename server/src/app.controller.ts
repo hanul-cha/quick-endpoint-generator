@@ -7,45 +7,78 @@ import {
   Post,
   Put,
   Query,
+  UseGuards,
 } from '@nestjs/common'
 
-import { AppService } from './app.service'
+import { AppService, EndpointRunOptions } from './app.service'
+import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard'
+import { CurrentUser } from './modules/auth/decorators/current-user.decorator'
+import { User } from './modules/users/entities/user.entity'
 
+@UseGuards(JwtAuthGuard)
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Get(':id')
-  getRequest(
-    @Param('id') id: string,
+  @Get(':endpointId')
+  async getRequest(
+    @Param('endpointId') endpointId: string,
     @Query() query: Record<string, string>,
     @Body() body: Record<string, string>,
-  ): Promise<string> {
-    console.log(id, query, body)
-    return this.appService.runEndpoint(id, {
+    @CurrentUser() user: User,
+  ) {
+    console.log('query', query)
+    console.log('body', body)
+    const options: EndpointRunOptions = {
       query,
       body,
-    })
+      context: { userId: user.id },
+    }
+    return this.appService.runEndpoint(endpointId, options)
   }
 
-  @Post(':id')
-  postRequest(
-    @Param('id') id: string,
+  @Post(':endpointId')
+  async postRequest(
+    @Param('endpointId') endpointId: string,
+    @Query() query: Record<string, string>,
     @Body() body: Record<string, string>,
-  ): Promise<string> {
-    return this.appService.runEndpoint(id, { body })
+    @CurrentUser() user: User,
+  ) {
+    const options: EndpointRunOptions = {
+      query,
+      body,
+      context: { userId: user.id },
+    }
+    return this.appService.runEndpoint(endpointId, options)
   }
 
-  @Put(':id')
-  putRequest(
-    @Param('id') id: string,
+  @Put(':endpointId')
+  async putRequest(
+    @Param('endpointId') endpointId: string,
+    @Query() query: Record<string, string>,
     @Body() body: Record<string, string>,
-  ): Promise<string> {
-    return this.appService.runEndpoint(id, { body })
+    @CurrentUser() user: User,
+  ) {
+    const options: EndpointRunOptions = {
+      query,
+      body,
+      context: { userId: user.id },
+    }
+    return this.appService.runEndpoint(endpointId, options)
   }
 
-  @Delete(':id')
-  deleteRequest(@Param('id') id: string): Promise<string> {
-    return this.appService.runEndpoint(id, {})
+  @Delete(':endpointId')
+  async deleteRequest(
+    @Param('endpointId') endpointId: string,
+    @Query() query: Record<string, string>,
+    @Body() body: Record<string, string>,
+    @CurrentUser() user: User,
+  ) {
+    const options: EndpointRunOptions = {
+      query,
+      body,
+      context: { userId: user.id },
+    }
+    return this.appService.runEndpoint(endpointId, options)
   }
 }

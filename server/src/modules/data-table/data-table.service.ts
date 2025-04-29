@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
+import { Repository, FindOptionsWhere } from 'typeorm'
 import { DataTable } from './data-table.entity'
 import { GlobalPrimitive } from 'src/app.types'
 
@@ -25,7 +25,7 @@ export interface PaginatedResult<T> {
 export class DataTableService {
   constructor(
     @InjectRepository(DataTable)
-    private dataTableRepository: Repository<DataTable>,
+    private readonly dataTableRepository: Repository<DataTable>,
   ) {}
 
   async create(
@@ -101,6 +101,42 @@ export class DataTableService {
 
   async findOne(id: string) {
     return await this.dataTableRepository.findOne({ where: { id } })
+  }
+
+  /**
+   * 다양한 조건으로 테이블을 검색하는 메서드
+   * @param where 검색 조건
+   * @param options 페이지네이션 옵션
+   * @returns 페이지네이션된 결과
+   */
+  async find(
+    where?: FindOptionsWhere<DataTable>,
+    options?: PaginationOptions,
+  ): Promise<PaginatedResult<DataTable>> {
+    const { page = 1, limit = 10, offset = 0 } = options || {}
+    const skip = offset || (page - 1) * limit
+
+    const [items, total] = await this.dataTableRepository.findAndCount({
+      where,
+      skip,
+      take: limit,
+      order: { createdAt: 'DESC' },
+    })
+
+    const totalPages = Math.ceil(total / limit)
+    const hasNextPage = skip + items.length < total
+    const hasPreviousPage = page > 1
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNextPage,
+      hasPreviousPage,
+      offset: skip,
+    }
   }
 
   async update(
