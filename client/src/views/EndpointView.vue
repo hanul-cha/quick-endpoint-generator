@@ -313,16 +313,25 @@
             <button
               @click="sendTestRequest"
               class="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+              :disabled="isLoading"
             >
-              Send Request
+              <span v-if="isLoading" class="flex items-center">
+                <svg class="w-4 h-4 mr-2 animate-spin" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                Loading...
+              </span>
+              <span v-else>Send Request</span>
             </button>
           </div>
 
           <!-- Response Section -->
-          <div v-if="testResponse" class="mt-6">
+          <div v-if="testResponse || errorMessage" class="mt-6">
             <h3 class="mb-2 text-lg font-medium">Response</h3>
-            <div class="p-4 rounded-md bg-gray-50">
-              <pre class="overflow-auto text-sm">{{ JSON.stringify(testResponse, null, 2) }}</pre>
+            <div class="p-4 rounded-md" :class="errorMessage ? 'bg-red-50' : 'bg-gray-50'">
+              <pre v-if="errorMessage" class="overflow-auto text-sm text-red-600 max-h-64">{{ errorMessage }}</pre>
+              <pre v-else class="overflow-auto text-sm max-h-64">{{ JSON.stringify(testResponse, null, 2) }}</pre>
             </div>
           </div>
         </div>
@@ -417,8 +426,12 @@ const closeModal = () => {
 }
 
 const handleEscKey = (event: KeyboardEvent) => {
-  if (event.key === 'Escape' && showModal.value) {
-    closeModal()
+  if (event.key === 'Escape') {
+    if (showModal.value) {
+      closeModal()
+    } else if (showTestModal.value) {
+      closeTestModal()
+    }
   }
 }
 
@@ -551,6 +564,8 @@ const currentEndpoint = ref<Endpoint | null>(null)
 const testUrl = ref('')
 const testParameters = ref<Record<string, { key: string; value: any }>>({})
 const testResponse = ref<any>(null)
+const isLoading = ref(false)
+const errorMessage = ref<string | null>(null)
 
 // 테스트 모달 열기
 const testEndpoint = (endpoint: Endpoint) => {
@@ -597,11 +612,17 @@ const closeTestModal = () => {
   testUrl.value = ''
   testParameters.value = {}
   testResponse.value = null
+  errorMessage.value = null
+  isLoading.value = false
 }
 
 // 테스트 요청 보내기
 const sendTestRequest = async () => {
   if (!currentEndpoint.value) return
+
+  isLoading.value = true
+  errorMessage.value = null
+  testResponse.value = null
 
   try {
     // 파라미터 값 변환
@@ -652,7 +673,9 @@ const sendTestRequest = async () => {
     testResponse.value = data
   } catch (error) {
     console.error('Test request failed:', error)
-    alert('요청을 보내는 중 오류가 발생했습니다.')
+    errorMessage.value = error instanceof Error ? error.message : '요청을 보내는 중 오류가 발생했습니다.'
+  } finally {
+    isLoading.value = false
   }
 }
 

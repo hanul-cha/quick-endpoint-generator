@@ -27,8 +27,6 @@ export class AppController {
     @Body() body: Record<string, string>,
     @CurrentUser() user: User,
   ) {
-    console.log('query', query)
-    console.log('body', body)
     const options: EndpointRunOptions = {
       query,
       body,

@@ -28,16 +28,36 @@ export class AppService {
     const mergedParams = { ...body, ...query }
 
     const endpoint = await this.endpointService.findOne(endpointId)
-    console.log(endpoint)
 
     this.validateParameter(endpoint.parameter, mergedParams)
 
     // script 실행
     if (endpoint.script) {
-      return this.executeScript(endpoint.script, mergedParams, context)
+      try {
+        const data = await this.executeScript(
+          endpoint.script,
+          mergedParams,
+          context,
+        )
+
+        return {
+          status: 'success',
+          data,
+        }
+      } catch (error) {
+        return {
+          status: 'fail',
+          data: { message: error.message },
+        }
+      }
     }
 
-    return 'No script provided'
+    return {
+      status: 'fail',
+      data: {
+        message: 'No script provided',
+      },
+    }
   }
 
   /**
@@ -57,6 +77,7 @@ export class AppService {
       const limitedRepository = this.createLimitedRepository(context)
 
       const scriptContext = this.createScriptContext(params, limitedRepository)
+
       const scriptObj = this.createScriptObject(script)
       return await this.runScriptWithTimeout(scriptObj, scriptContext)
     } catch (error) {
@@ -127,6 +148,11 @@ export class AppService {
       JSON: JSON,
       Date: Date,
       Math: Math,
+      Number: Number,
+      String: String,
+      Boolean: Boolean,
+      Object: Object,
+      Array: Array,
       // 추가 보안을 위해 setTimeout, setInterval 등은 제외
     })
   }
@@ -138,9 +164,8 @@ export class AppService {
    */
   private createScriptObject(script: string): vm.Script {
     return new vm.Script(`
-      (function(params, repository) {
-        ${script}
-      })(params, repository);
+      ${script}
+      result = main(params, repository);
     `)
   }
 
