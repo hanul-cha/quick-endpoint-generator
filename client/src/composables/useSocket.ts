@@ -7,7 +7,7 @@ const isConnected = ref(false)
 export function useSocket() {
   const connect = () => {
     if (!socket.value) {
-      socket.value = io(import.meta.env.VITE_WS_URL)
+      socket.value = io(import.meta.env.VITE_API_URL)
 
       socket.value.on('connect', () => {
         console.log('Socket connected')

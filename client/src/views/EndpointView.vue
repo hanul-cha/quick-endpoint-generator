@@ -37,6 +37,12 @@
             </div>
             <div class="space-x-2">
               <button
+                @click="testEndpoint(endpoint)"
+                class="text-green-600 hover:text-green-800"
+              >
+                Test
+              </button>
+              <button
                 @click="editEndpoint(endpoint)"
                 class="text-indigo-600 hover:text-indigo-800"
               >
@@ -207,6 +213,117 @@
             >
               {{ isEditing ? 'Save Changes' : 'Create Endpoint' }}
             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Test Endpoint Modal -->
+    <div
+      v-if="showTestModal && currentEndpoint"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+      @click.self="closeTestModal"
+    >
+      <div class="w-full max-w-2xl p-6 bg-white border border-gray-200 rounded-lg">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-semibold">Test Endpoint</h2>
+          <button
+            @click="closeTestModal"
+            class="text-gray-500 hover:text-gray-700"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Endpoint URL</label>
+            <div class="flex items-center mt-1">
+              <span class="px-3 py-2 text-sm text-gray-500 bg-gray-100 border border-r-0 border-gray-300 rounded-l-md">
+                {{ currentEndpoint.method }}
+              </span>
+              <input
+                v-model="testUrl"
+                type="text"
+                class="flex-1 block w-full px-3 py-2 border border-gray-300 rounded-r-md focus:outline-none focus:border-indigo-500"
+                readonly
+              />
+            </div>
+          </div>
+
+          <!-- Parameters Section -->
+          <div v-if="currentEndpoint.parameter && Object.keys(currentEndpoint.parameter).length > 0">
+            <label class="block text-sm font-medium text-gray-700">Parameters</label>
+            <div class="mt-4 space-y-4">
+              <div v-for="(type, key) in currentEndpoint.parameter" :key="key" class="grid grid-cols-[1fr,1fr] gap-4 items-start">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700">Key</label>
+                  <input
+                    :value="key"
+                    type="text"
+                    class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:border-indigo-500 focus:outline-none"
+                    readonly
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700">Value</label>
+                  <input
+                    v-if="type === 'String'"
+                    v-model="testParameters[key].value"
+                    type="text"
+                    class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:border-indigo-500 focus:outline-none"
+                    :placeholder="`Enter ${type} value`"
+                  />
+                  <input
+                    v-else-if="type === 'Number'"
+                    v-model.number="testParameters[key].value"
+                    type="number"
+                    class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:border-indigo-500 focus:outline-none"
+                    :placeholder="`Enter ${type} value`"
+                  />
+                  <select
+                    v-else-if="type === 'Boolean'"
+                    v-model="testParameters[key].value"
+                    class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:border-indigo-500 focus:outline-none"
+                  >
+                    <option :value="true">true</option>
+                    <option :value="false">false</option>
+                  </select>
+                  <textarea
+                    v-else-if="type === 'Object' || type === 'Array'"
+                    v-model="testParameters[key].value"
+                    rows="2"
+                    class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:border-indigo-500 focus:outline-none"
+                    :placeholder="`Enter ${type} value (JSON format)`"
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-end mt-6 space-x-3">
+            <button
+              @click="closeTestModal"
+              class="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              @click="sendTestRequest"
+              class="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+            >
+              Send Request
+            </button>
+          </div>
+
+          <!-- Response Section -->
+          <div v-if="testResponse" class="mt-6">
+            <h3 class="mb-2 text-lg font-medium">Response</h3>
+            <div class="p-4 rounded-md bg-gray-50">
+              <pre class="overflow-auto text-sm">{{ JSON.stringify(testResponse, null, 2) }}</pre>
+            </div>
           </div>
         </div>
       </div>
@@ -425,6 +542,117 @@ const saveEndpoint = async () => {
   } catch (error) {
     console.error(`Failed to ${isEditing.value ? 'update' : 'create'} endpoint:`, error)
     alert(`엔드포인트 ${isEditing.value ? '수정' : '생성'} 중 오류가 발생했습니다.`)
+  }
+}
+
+// 테스트 관련 상태
+const showTestModal = ref(false)
+const currentEndpoint = ref<Endpoint | null>(null)
+const testUrl = ref('')
+const testParameters = ref<Record<string, { key: string; value: any }>>({})
+const testResponse = ref<any>(null)
+
+// 테스트 모달 열기
+const testEndpoint = (endpoint: Endpoint) => {
+  currentEndpoint.value = endpoint
+  testUrl.value = `${import.meta.env.VITE_API_URL}/${endpoint.id}`
+
+  // 파라미터 초기화
+  testParameters.value = {}
+  if (endpoint.parameter) {
+    Object.entries(endpoint.parameter).forEach(([key, type]) => {
+      testParameters.value[key] = {
+        key,
+        value: getDefaultValue(type)
+      }
+    })
+  }
+
+  testResponse.value = null
+  showTestModal.value = true
+}
+
+// 타입에 따른 기본값 설정
+const getDefaultValue = (type: ParameterType): any => {
+  switch (type) {
+    case 'String':
+      return ''
+    case 'Number':
+      return 0
+    case 'Boolean':
+      return false
+    case 'Object':
+      return '{}'
+    case 'Array':
+      return '[]'
+    default:
+      return ''
+  }
+}
+
+// 테스트 모달 닫기
+const closeTestModal = () => {
+  showTestModal.value = false
+  currentEndpoint.value = null
+  testUrl.value = ''
+  testParameters.value = {}
+  testResponse.value = null
+}
+
+// 테스트 요청 보내기
+const sendTestRequest = async () => {
+  if (!currentEndpoint.value) return
+
+  try {
+    // 파라미터 값 변환
+    const params: Record<string, any> = {}
+    Object.entries(testParameters.value).forEach(([key, param]) => {
+      const type = currentEndpoint.value?.parameter?.[key]
+      if (type === 'Object' || type === 'Array') {
+        try {
+          params[key] = JSON.parse(param.value)
+        } catch (error) {
+          console.error(`Invalid JSON for ${key}:`, error)
+          throw new Error(`Invalid JSON format for ${key}`)
+        }
+      } else {
+        params[key] = param.value
+      }
+    })
+
+    // URL 생성
+    let url = testUrl.value
+    const method = currentEndpoint.value.method
+
+    // GET, DELETE 메소드의 경우 query parameter로 전송
+    if (method === 'GET' || method === 'DELETE') {
+      const queryParams = new URLSearchParams()
+      Object.entries(params).forEach(([key, value]) => {
+        queryParams.append(key, String(value))
+      })
+      url += `?${queryParams.toString()}`
+    }
+
+    // 요청 옵션 설정
+    const requestOptions: RequestInit = {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    }
+
+    // POST, PUT 메소드의 경우 body에 파라미터 전송
+    if (method === 'POST' || method === 'PUT') {
+      requestOptions.body = JSON.stringify(params)
+    }
+
+    const response = await fetch(url, requestOptions)
+    const data = await response.json()
+    testResponse.value = data
+  } catch (error) {
+    console.error('Test request failed:', error)
+    alert('요청을 보내는 중 오류가 발생했습니다.')
   }
 }
 

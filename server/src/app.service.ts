@@ -202,6 +202,51 @@ export class AppService {
   }
 
   /**
+   * 파라미터 값을 정의된 타입에 맞게 변환
+   * @param value 변환할 값
+   * @param type 변환할 타입
+   * @returns 변환된 값
+   */
+  private convertParameterValue(value: string, type: GlobalPrimitive): any {
+    try {
+      switch (type) {
+        case GlobalPrimitive.String:
+          return value
+        case GlobalPrimitive.Number:
+          const num = Number(value)
+          if (isNaN(num)) {
+            throw new Error('Parameter type mismatch')
+          }
+          return num
+        case GlobalPrimitive.Boolean:
+          if (value.toLowerCase() === 'true') return true
+          if (value.toLowerCase() === 'false') return false
+          throw new Error('Parameter type mismatch')
+        case GlobalPrimitive.Object:
+          try {
+            return JSON.parse(value)
+          } catch {
+            throw new Error('Parameter type mismatch')
+          }
+        case GlobalPrimitive.Array:
+          try {
+            const parsed = JSON.parse(value)
+            if (!Array.isArray(parsed)) {
+              throw new Error('Parameter type mismatch')
+            }
+            return parsed
+          } catch {
+            throw new Error('Parameter type mismatch')
+          }
+        default:
+          throw new Error('Parameter type mismatch')
+      }
+    } catch (error) {
+      throw new HttpException('Parameter type mismatch', HttpStatus.BAD_REQUEST)
+    }
+  }
+
+  /**
    * 파라미터 타입 검증
    * @param parameter 정의된 파라미터 타입
    * @param mergedParams 실제 전달된 파라미터
@@ -211,44 +256,17 @@ export class AppService {
     mergedParams: Record<string, string>,
   ) {
     for (const key of Object.keys(parameter)) {
-      this.validateSingleParameterType(parameter[key], mergedParams[key])
-    }
-  }
-
-  /**
-   * 단일 파라미터 타입 검증
-   * @param expectedType 예상 타입
-   * @param actualValue 실제 값
-   */
-  private validateSingleParameterType(
-    expectedType: GlobalPrimitive,
-    actualValue: any,
-  ) {
-    if (
-      expectedType === GlobalPrimitive.String &&
-      typeof actualValue !== 'string'
-    ) {
-      throw new HttpException('Parameter type mismatch', HttpStatus.BAD_REQUEST)
-    } else if (
-      expectedType === GlobalPrimitive.Number &&
-      typeof actualValue !== 'number'
-    ) {
-      throw new HttpException('Parameter type mismatch', HttpStatus.BAD_REQUEST)
-    } else if (
-      expectedType === GlobalPrimitive.Boolean &&
-      typeof actualValue !== 'boolean'
-    ) {
-      throw new HttpException('Parameter type mismatch', HttpStatus.BAD_REQUEST)
-    } else if (
-      expectedType === GlobalPrimitive.Array &&
-      !Array.isArray(actualValue)
-    ) {
-      throw new HttpException('Parameter type mismatch', HttpStatus.BAD_REQUEST)
-    } else if (
-      expectedType === GlobalPrimitive.Object &&
-      typeof actualValue !== 'object'
-    ) {
-      throw new HttpException('Parameter type mismatch', HttpStatus.BAD_REQUEST)
+      try {
+        mergedParams[key] = this.convertParameterValue(
+          mergedParams[key],
+          parameter[key],
+        )
+      } catch (error) {
+        throw new HttpException(
+          'Parameter type mismatch',
+          HttpStatus.BAD_REQUEST,
+        )
+      }
     }
   }
 }
