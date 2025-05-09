@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import ChatView from '../views/ChatView.vue'
 import DataView from '../views/DataView.vue'
 import EndpointView from '../views/EndpointView.vue'
 import LoginView from '../views/LoginView.vue'
@@ -13,14 +12,14 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/chat'
+      redirect: '/data/schema'
     },
-    {
-      path: '/chat',
-      name: 'chat',
-      component: ChatView,
-      meta: { requiresAuth: true }
-    },
+    // {
+    //   path: '/chat',
+    //   name: 'chat',
+    //   component: ChatView,
+    //   meta: { requiresAuth: true }
+    // },
     {
       path: '/login',
       name: 'login',
@@ -42,6 +41,10 @@ const router = createRouter({
       component: DataView,
       meta: { requiresAuth: true },
       children: [
+        {
+          path: '',
+          redirect: '/data/schema'
+        },
         {
           path: 'schema',
           name: 'schema',

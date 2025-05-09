@@ -1,8 +1,8 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-6">Data Management</h1>
-    <div class="bg-white shadow-md rounded-lg p-6">
-      <nav class="flex space-x-4 mb-6">
+  <div class="container px-4 py-8 mx-auto">
+    <h1 class="mb-6 text-3xl font-bold">Data Management</h1>
+    <div class="p-6 bg-white rounded-lg shadow-md">
+      <nav class="flex mb-6 space-x-4">
         <router-link
           to="/data/schema"
           class="px-4 py-2 rounded-md"
