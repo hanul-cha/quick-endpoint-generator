@@ -2,6 +2,11 @@ import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
 
 import { GlobalPrimitive } from 'src/app.types'
 
+export interface EndpointParameter {
+  type: GlobalPrimitive
+  required: boolean
+}
+
 @Entity()
 export class Endpoint {
   @PrimaryGeneratedColumn('uuid')
@@ -23,7 +28,7 @@ export class Endpoint {
     type: 'json',
     nullable: true,
   })
-  parameter: Record<string, GlobalPrimitive>
+  parameter: Record<string, EndpointParameter>
 
   @Column({
     type: 'enum',

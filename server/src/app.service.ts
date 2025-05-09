@@ -3,6 +3,7 @@ import * as vm from 'vm'
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
 
 import { DataTableService } from './modules/data-table/data-table.service'
+import { EndpointParameter } from './modules/endpoint/endpoint.entity'
 import { EndpointService } from './modules/endpoint/endpoint.service'
 import { GlobalPrimitive } from './app.types'
 
@@ -24,11 +25,11 @@ export class AppService {
 
     const endpoint = await this.endpointService.findOne(endpointId)
 
-    this.validateParameter(endpoint.parameter, mergedParams)
-
     // script 실행
     if (endpoint.script) {
       try {
+        this.validateParameter(endpoint.parameter, mergedParams)
+
         const data = await this.executeScript(
           endpoint.script,
           mergedParams,
@@ -197,7 +198,7 @@ export class AppService {
    * @param mergedParams 실제 전달된 파라미터
    */
   private validateParameter(
-    parameter: Record<string, GlobalPrimitive>,
+    parameter: Record<string, EndpointParameter>,
     mergedParams: Record<string, string>,
   ) {
     this.validateParameterCount(parameter, mergedParams)
@@ -210,14 +211,28 @@ export class AppService {
    * @param mergedParams 실제 전달된 파라미터
    */
   private validateParameterCount(
-    parameter: Record<string, GlobalPrimitive>,
+    parameter: Record<string, EndpointParameter>,
     mergedParams: Record<string, string>,
   ) {
     const parameterKeys = Object.keys(parameter)
     const mergedParamsKeys = Object.keys(mergedParams)
 
-    if (parameterKeys.length !== mergedParamsKeys.length) {
-      throw new Error('Parameter keys and merged params keys length mismatch')
+    // required가 true인 파라미터가 모두 있는지 확인
+    const requiredParams = parameterKeys.filter(
+      (key) => parameter[key].required,
+    )
+    const missingRequired = requiredParams.filter(
+      (key) =>
+        !mergedParamsKeys.includes(key) ||
+        mergedParams[key] === '' ||
+        mergedParams[key] === undefined ||
+        mergedParams[key] === null,
+    )
+
+    if (missingRequired.length > 0) {
+      throw new Error(
+        `Missing required parameters: ${missingRequired.join(', ')}`,
+      )
     }
   }
 
@@ -272,18 +287,22 @@ export class AppService {
    * @param mergedParams 실제 전달된 파라미터
    */
   private validateParameterTypes(
-    parameter: Record<string, GlobalPrimitive>,
+    parameter: Record<string, EndpointParameter>,
     mergedParams: Record<string, string>,
   ) {
     for (const key of Object.keys(parameter)) {
+      if (!mergedParams[key] && !parameter[key].required) {
+        continue
+      }
+
       try {
         mergedParams[key] = this.convertParameterValue(
           mergedParams[key],
-          parameter[key],
+          parameter[key].type,
         )
       } catch (error) {
         throw new HttpException(
-          'Parameter type mismatch',
+          `Parameter type mismatch for ${key}`,
           HttpStatus.BAD_REQUEST,
         )
       }

@@ -4,10 +4,14 @@ export type ParameterType = 'String' | 'Number' | 'Boolean' | 'Object' | 'Array'
 export interface ParameterFieldWithKey {
   key: string
   type: ParameterType
+  required?: boolean
 }
 
 export interface Parameter {
-  [key: string]: ParameterType
+  [key: string]: {
+    type: ParameterType
+    required?: boolean
+  }
 }
 
 export interface Endpoint {

@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator'
 
-import { GlobalPrimitive } from 'src/app.types'
+import { EndpointParameter } from '../endpoint.entity'
 
 export class CreateEndpointDto {
   @IsString()
@@ -13,5 +13,5 @@ export class CreateEndpointDto {
 
   @IsObject()
   @IsOptional()
-  parameter?: Record<string, GlobalPrimitive>
+  parameter?: Record<string, EndpointParameter>
 }

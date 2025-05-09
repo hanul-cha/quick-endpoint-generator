@@ -160,12 +160,14 @@
                     <option value="json">JSON</option>
                   </select>
                 </div>
-                <button
-                  @click="removeColumn(index)"
-                  class="text-red-600 mt-7 hover:text-red-800 whitespace-nowrap"
-                >
-                  Remove
-                </button>
+                <div class="flex items-center h-full pt-2">
+                  <button
+                    @click="removeColumn(index)"
+                    class="text-red-600 hover:text-red-800 whitespace-nowrap"
+                  >
+                    Remove
+                  </button>
+                </div>
               </div>
               <button
                 @click="addColumn"

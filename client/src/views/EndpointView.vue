@@ -159,7 +159,7 @@
           <div>
             <label class="block text-sm font-medium text-gray-700">Parameter</label>
             <div class="mt-4 space-y-4">
-              <div v-for="(field, index) in parameterFields" :key="index" class="grid grid-cols-[1fr,1fr,auto] gap-4 items-start">
+              <div v-for="(field, index) in parameterFields" :key="index" class="grid grid-cols-[1fr,1fr,auto,auto] gap-4 items-start">
                 <div>
                   <label class="block text-sm font-medium text-gray-700">Key</label>
                   <input
@@ -181,12 +181,24 @@
                     <option value="Array">Array</option>
                   </select>
                 </div>
-                <button
-                  @click="removeField(index)"
-                  class="text-red-600 mt-7 hover:text-red-800 whitespace-nowrap"
-                >
-                  Remove
-                </button>
+                <div class="flex items-center h-full pt-2">
+                  <label class="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      v-model="field.required"
+                      class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                    />
+                    <span class="text-sm text-gray-700">Required</span>
+                  </label>
+                </div>
+                <div class="flex items-center h-full pt-2">
+                  <button
+                    @click="removeField(index)"
+                    class="text-red-600 hover:text-red-800 whitespace-nowrap"
+                  >
+                    Remove
+                  </button>
+                </div>
               </div>
               <button
                 @click="addField"
@@ -257,7 +269,7 @@
           <div v-if="currentEndpoint.parameter && Object.keys(currentEndpoint.parameter).length > 0">
             <label class="block text-sm font-medium text-gray-700">Parameters</label>
             <div class="mt-4 space-y-4">
-              <div v-for="(type, key) in currentEndpoint.parameter" :key="key" class="grid grid-cols-[1fr,1fr] gap-4 items-start">
+              <div v-for="(param, key) in currentEndpoint.parameter" :key="key" class="grid grid-cols-[1fr,1fr] gap-4 items-start">
                 <div>
                   <label class="block text-sm font-medium text-gray-700">Key</label>
                   <input
@@ -270,21 +282,21 @@
                 <div>
                   <label class="block text-sm font-medium text-gray-700">Value</label>
                   <input
-                    v-if="type === 'String'"
+                    v-if="param.type === 'String'"
                     v-model="testParameters[key].value"
                     type="text"
                     class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:border-indigo-500 focus:outline-none"
-                    :placeholder="`Enter ${type} value`"
+                    :placeholder="`Enter ${param.type} value`"
                   />
                   <input
-                    v-else-if="type === 'Number'"
+                    v-else-if="param.type === 'Number'"
                     v-model.number="testParameters[key].value"
                     type="number"
                     class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:border-indigo-500 focus:outline-none"
-                    :placeholder="`Enter ${type} value`"
+                    :placeholder="`Enter ${param.type} value`"
                   />
                   <select
-                    v-else-if="type === 'Boolean'"
+                    v-else-if="param.type === 'Boolean'"
                     v-model="testParameters[key].value"
                     class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:border-indigo-500 focus:outline-none"
                   >
@@ -292,11 +304,11 @@
                     <option :value="false">false</option>
                   </select>
                   <textarea
-                    v-else-if="type === 'Object' || type === 'Array'"
+                    v-else-if="param.type === 'Object' || param.type === 'Array'"
                     v-model="testParameters[key].value"
                     rows="2"
                     class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:border-indigo-500 focus:outline-none"
-                    :placeholder="`Enter ${type} value (JSON format)`"
+                    :placeholder="`Enter ${param.type} value (JSON format)`"
                   ></textarea>
                 </div>
               </div>
@@ -388,7 +400,8 @@ const errors = ref({
 const addField = () => {
   parameterFields.value.push({
     key: '',
-    type: 'String'
+    type: 'String',
+    required: false
   })
 }
 
@@ -400,7 +413,10 @@ const updateParameter = () => {
   const parameterObj: Parameter = {}
   for (const field of parameterFields.value) {
     if (field.key.trim()) {
-      parameterObj[field.key] = field.type
+      parameterObj[field.key] = {
+        type: field.type,
+        required: field.required || false
+      }
     }
   }
   editingEndpoint.value.parameter = parameterObj
@@ -475,9 +491,10 @@ const editEndpoint = (endpoint: Endpoint) => {
     parameter: endpoint.parameter
   }
   // parameter 객체를 fields 배열로 변환
-  parameterFields.value = Object.entries(endpoint.parameter || {}).map(([key, type]) => ({
+  parameterFields.value = Object.entries(endpoint.parameter || {}).map(([key, param]) => ({
     key,
-    type
+    type: param.type,
+    required: param.required
   }))
   showModal.value = true
 }
@@ -575,10 +592,10 @@ const testEndpoint = (endpoint: Endpoint) => {
   // 파라미터 초기화
   testParameters.value = {}
   if (endpoint.parameter) {
-    Object.entries(endpoint.parameter).forEach(([key, type]) => {
+    Object.entries(endpoint.parameter).forEach(([key, param]) => {
       testParameters.value[key] = {
         key,
-        value: getDefaultValue(type)
+        value: getDefaultValue(param.type)
       }
     })
   }
@@ -628,8 +645,8 @@ const sendTestRequest = async () => {
     // 파라미터 값 변환
     const params: Record<string, any> = {}
     Object.entries(testParameters.value).forEach(([key, param]) => {
-      const type = currentEndpoint.value?.parameter?.[key]
-      if (type === 'Object' || type === 'Array') {
+      const paramType = currentEndpoint.value?.parameter?.[key]?.type
+      if (paramType === 'Object' || paramType === 'Array') {
         try {
           params[key] = JSON.parse(param.value)
         } catch (error) {
