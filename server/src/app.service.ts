@@ -6,14 +6,9 @@ import { DataTableService } from './modules/data-table/data-table.service'
 import { EndpointService } from './modules/endpoint/endpoint.service'
 import { GlobalPrimitive } from './app.types'
 
-export interface EndpointContext {
-  userId: number
-}
-
 export interface EndpointRunOptions {
   body?: Record<string, string>
   query?: Record<string, string>
-  context: EndpointContext
 }
 
 @Injectable()
@@ -24,7 +19,7 @@ export class AppService {
   ) {}
 
   async runEndpoint(endpointId: string, options: EndpointRunOptions) {
-    const { body, query, context } = options
+    const { body, query } = options
     const mergedParams = { ...body, ...query }
 
     const endpoint = await this.endpointService.findOne(endpointId)
@@ -37,7 +32,7 @@ export class AppService {
         const data = await this.executeScript(
           endpoint.script,
           mergedParams,
-          context,
+          endpoint.userId,
         )
 
         return {
@@ -70,11 +65,11 @@ export class AppService {
   private async executeScript(
     script: string,
     params: Record<string, any>,
-    context: EndpointContext,
+    userId: number,
   ): Promise<any> {
     try {
       // 제한된 리포지토리 객체 생성
-      const limitedRepository = this.createLimitedRepository(context)
+      const limitedRepository = this.createLimitedRepository(userId)
 
       const scriptContext = this.createScriptContext(params, limitedRepository)
 
@@ -94,14 +89,14 @@ export class AppService {
    * @param context 실행 컨텍스트 (사용자 정보 등)
    * @returns 제한된 리포지토리 객체
    */
-  private createLimitedRepository(context: EndpointContext) {
+  private createLimitedRepository(userId: number) {
     return {
       // 테이블 관련 제한된 CRUD 작업
       table: {
         findOne: async (id: string) => {
           // userId로 접근 제한
           const table = await this.dataTableService.findOne(id)
-          if (table?.userId !== context.userId) {
+          if (table?.userId !== userId) {
             throw new HttpException(
               'Access denied to this table',
               HttpStatus.FORBIDDEN,
@@ -111,12 +106,12 @@ export class AppService {
         },
         findAll: async (options?: any) => {
           // userId로 필터링
-          return this.dataTableService.findByUserId(context.userId, options)
+          return this.dataTableService.findByUserId(userId, options)
         },
         find: async (where?: any, options?: any) => {
           // userId로 필터링
           return this.dataTableService.find(
-            { ...where, userId: context.userId },
+            { ...where, userId: userId },
             options,
           )
         },
