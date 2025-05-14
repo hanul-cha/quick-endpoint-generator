@@ -7,6 +7,7 @@ export interface DataColumn {
   id: string
   name: string
   type: GlobalPrimitive
+  required?: boolean
 }
 
 @Entity()

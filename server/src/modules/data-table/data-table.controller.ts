@@ -13,7 +13,7 @@ import { DataTableService, PaginationOptions } from './data-table.service'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { CurrentUser } from '../auth/decorators/current-user.decorator'
 import { User } from '../users/entities/user.entity'
-import { GlobalPrimitive } from 'src/app.types'
+import { DataColumn } from './data-table.entity'
 
 @Controller('data-tables')
 @UseGuards(JwtAuthGuard)
@@ -25,7 +25,7 @@ export class DataTableController {
     @Body()
     body: {
       name: string
-      columns: { id: string; name: string; type: GlobalPrimitive }[]
+      columns: DataColumn[]
     },
     @CurrentUser() user: User,
   ) {
@@ -65,7 +65,7 @@ export class DataTableController {
     @Body()
     body: {
       name: string
-      columns: { id: string; name: string; type: GlobalPrimitive }[]
+      columns: DataColumn[]
     },
     @CurrentUser() user: User,
   ) {

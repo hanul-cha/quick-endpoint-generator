@@ -2,6 +2,7 @@ export interface DataColumn {
   id: string
   name: string
   type: string
+  required?: boolean
 }
 
 export interface DataTable {

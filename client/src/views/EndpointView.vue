@@ -587,7 +587,7 @@ const errorMessage = ref<string | null>(null)
 // 테스트 모달 열기
 const testEndpoint = (endpoint: Endpoint) => {
   currentEndpoint.value = endpoint
-  testUrl.value = `${import.meta.env.VITE_API_URL}/${endpoint.id}`
+  testUrl.value = `${import.meta.env.VITE_API_URL}/run/${endpoint.id}`
 
   // 파라미터 초기화
   testParameters.value = {}
