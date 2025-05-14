@@ -87,7 +87,7 @@
       class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
       @click.self="closeModal"
     >
-      <div class="w-full max-w-2xl p-6 bg-white border border-gray-200 rounded-lg">
+      <div class="w-full max-w-2xl p-6 bg-white border border-gray-200 rounded-lg" style="max-height:98vh; overflow-y:auto;">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-xl font-semibold">{{ isEditing ? 'Edit' : 'Create New' }} Endpoint</h2>
           <button
@@ -141,16 +141,9 @@
 
           <div>
             <label class="block text-sm font-medium text-gray-700">Script</label>
-            <textarea
-              v-model="editingEndpoint.script"
-              rows="4"
-              :class="[
-                'mt-1 block w-full rounded-md border px-3 py-2 focus:outline-none',
-                errors.script
-                  ? 'border-red-500 focus:border-red-500'
-                  : 'border-gray-300 focus:border-indigo-500'
-              ]"
-            ></textarea>
+            <div class="editor-container">
+              <CodeEditor v-model="editingEndpoint.script" :height="150" />
+            </div>
             <p v-if="errors.script" class="mt-1 text-sm text-red-600">
               {{ errors.script }}
             </p>
@@ -356,6 +349,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import type { Endpoint, Parameter, ParameterFieldWithKey, ParameterType } from '@/types/endpoint'
 import { endpointApi } from '@/api/endpoint'
+import CodeEditor from '@/components/CodeEditor.vue'
 
 interface PaginatedResponse<T> {
   items: T[]
@@ -715,5 +709,11 @@ input.border-red-500:focus, select.border-red-500:focus, textarea.border-red-500
 
 input.border-gray-300:focus, select.border-gray-300:focus, textarea.border-gray-300:focus {
   @apply ring-indigo-500;
+}
+
+.editor-container {
+  width: 100%;
+  margin-top: 8px;
+  margin-bottom: 8px;
 }
 </style>
