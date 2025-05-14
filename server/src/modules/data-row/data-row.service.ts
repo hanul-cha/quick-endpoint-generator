@@ -24,7 +24,7 @@ export class DataRowService {
     }
 
     // 컬럼 ID가 모두 존재하는지 확인
-    const columnIds = dataTable.columns.map((col) => col.id)
+    const columnIds = dataTable.columns?.map((col) => col.id) || []
     const valueColumnIds = Object.keys(values)
     const invalidColumnIds = valueColumnIds.filter(
       (id) => !columnIds.includes(id),
@@ -112,7 +112,7 @@ export class DataRowService {
 
     // 데이터 테이블의 컬럼 ID가 모두 존재하는지 확인
     const dataTable = await this.dataTableService.findOne(dataRow.dataTableId)
-    const columnIds = dataTable.columns.map((col) => col.id)
+    const columnIds = dataTable.columns?.map((col) => col.id) || []
     const valueColumnIds = Object.keys(values)
     const invalidColumnIds = valueColumnIds.filter(
       (id) => !columnIds.includes(id),

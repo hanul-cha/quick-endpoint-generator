@@ -1,12 +1,32 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
+import {
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator'
 
 import { DataRow } from '../data-row/data-row.entity'
 import { GlobalPrimitive } from 'src/app.types'
+import { Type } from 'class-transformer'
 
-export interface DataColumn {
+export class DataColumn {
   id: string
+
+  @IsString()
+  @IsNotEmpty()
   name: string
+
+  @IsEnum(GlobalPrimitive)
+  @IsNotEmpty()
   type: GlobalPrimitive
+
+  @IsBoolean()
+  @IsOptional()
   required?: boolean
 }
 
@@ -16,10 +36,17 @@ export class DataTable {
   id: string
 
   @Column()
+  @IsString()
+  @IsNotEmpty()
   name: string
 
-  @Column('jsonb')
-  columns: DataColumn[]
+  @Column({ type: 'jsonb', nullable: true })
+  @IsObject({ each: true })
+  @ValidateNested({ each: true })
+  @Type(() => DataColumn)
+  @IsArray()
+  @IsOptional()
+  columns?: DataColumn[]
 
   @Column({ nullable: true })
   userId: number

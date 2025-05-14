@@ -6,6 +6,7 @@ import { DataTableService } from './modules/data-table/data-table.service'
 import { EndpointParameter } from './modules/endpoint/endpoint.entity'
 import { EndpointService } from './modules/endpoint/endpoint.service'
 import { GlobalPrimitive } from './app.types'
+import { createLimitedRepository } from './app.limited.repository'
 
 export interface EndpointRunOptions {
   body?: Record<string, string>
@@ -16,7 +17,7 @@ export interface EndpointRunOptions {
 export class AppService {
   constructor(
     private readonly endpointService: EndpointService,
-    private readonly dataTableService: DataTableService,
+    readonly dataTableService: DataTableService,
   ) {}
 
   async runEndpoint(endpointId: string, options: EndpointRunOptions) {
@@ -70,7 +71,7 @@ export class AppService {
   ): Promise<any> {
     try {
       // 제한된 리포지토리 객체 생성
-      const limitedRepository = this.createLimitedRepository(userId)
+      const limitedRepository = createLimitedRepository(userId, this)
 
       const scriptContext = this.createScriptContext(params, limitedRepository)
 
@@ -82,43 +83,6 @@ export class AppService {
         `Script execution failed: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       )
-    }
-  }
-
-  /**
-   * 스크립트에서 사용할 수 있는 제한된 리포지토리 객체 생성
-   * @param context 실행 컨텍스트 (사용자 정보 등)
-   * @returns 제한된 리포지토리 객체
-   */
-  private createLimitedRepository(userId: number) {
-    return {
-      // 테이블 관련 제한된 CRUD 작업
-      table: {
-        findOne: async (id: string) => {
-          // userId로 접근 제한
-          const table = await this.dataTableService.findOne(id)
-          if (table?.userId !== userId) {
-            throw new HttpException(
-              'Access denied to this table',
-              HttpStatus.FORBIDDEN,
-            )
-          }
-          return table
-        },
-        findAll: async (options?: any) => {
-          // userId로 필터링
-          return this.dataTableService.findByUserId(userId, options)
-        },
-        find: async (where?: any, options?: any) => {
-          // userId로 필터링
-          return this.dataTableService.find(
-            { ...where, userId: userId },
-            options,
-          )
-        },
-        // 추가 제한된 메서드들...
-      },
-      // 다른 리포지토리들도 필요에 따라 추가 가능
     }
   }
 

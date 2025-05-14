@@ -25,7 +25,7 @@ export class DataTableController {
     @Body()
     body: {
       name: string
-      columns: DataColumn[]
+      columns?: DataColumn[]
     },
     @CurrentUser() user: User,
   ) {

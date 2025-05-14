@@ -31,7 +31,20 @@
       <div v-else class="space-y-6">
         <div v-for="table in tables.items" :key="table.id" class="p-4 border rounded-lg">
           <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-medium">{{ table.name }}</h3>
+            <div class="flex items-center space-x-2">
+              <h3 class="text-lg font-medium">{{ table.name }}</h3>
+              <span class="text-xs text-gray-400">({{ table.id }})</span>
+              <button
+                @click="copyId(table.id)"
+                class="ml-1 text-xs text-gray-500 hover:text-indigo-600 focus:outline-none"
+                title="ID 복사"
+              >
+                <svg class="inline w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16h8a2 2 0 002-2V8a2 2 0 00-2-2H8a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2" />
+                </svg>
+              </button>
+            </div>
             <div class="space-x-2">
               <button
                 @click="editTable(table)"
@@ -195,6 +208,13 @@
         </div>
       </div>
     </div>
+
+    <!-- Toast 알림 -->
+    <transition name="fade">
+      <div v-if="showToast" class="fixed z-50 px-6 py-3 text-white transform -translate-x-1/2 bg-green-500 rounded shadow-lg bottom-8 left-1/2">
+        {{ toastMessage }}
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -235,6 +255,10 @@ const errors = ref({
   tableName: '',
   columns: [] as string[]
 })
+
+const copiedId = ref<string | null>(null)
+const showToast = ref(false)
+const toastMessage = ref('')
 
 const closeModal = () => {
   showModal.value = false
@@ -341,6 +365,23 @@ const deleteTable = async (tableId: string) => {
   }
 }
 
+const showCopyToast = (msg: string) => {
+  toastMessage.value = msg
+  showToast.value = true
+  setTimeout(() => {
+    showToast.value = false
+  }, 1500)
+}
+
+const copyId = async (id: string) => {
+  try {
+    await navigator.clipboard.writeText(id)
+    showCopyToast('복사되었습니다')
+  } catch (e) {
+    alert('클립보드 복사에 실패했습니다.')
+  }
+}
+
 // 컴포넌트 마운트 시 테이블 목록 로드
 const loadTables = async (page?: number) => {
   try {
@@ -381,5 +422,12 @@ input.border-red-500:focus {
 
 input.border-gray-300:focus {
   @apply ring-indigo-500;
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
 }
 </style>

@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository, FindOptionsWhere } from 'typeorm'
-import { DataTable } from './data-table.entity'
-import { GlobalPrimitive } from 'src/app.types'
+import { DataColumn, DataTable } from './data-table.entity'
 
 export interface PaginationOptions {
   page: number
@@ -28,11 +27,7 @@ export class DataTableService {
     private readonly dataTableRepository: Repository<DataTable>,
   ) {}
 
-  async create(
-    name: string,
-    columns: { id: string; name: string; type: GlobalPrimitive }[],
-    userId?: number,
-  ) {
+  async create(name: string, columns?: DataColumn[], userId?: number) {
     const dataTable = this.dataTableRepository.create({
       name,
       columns,
@@ -142,7 +137,7 @@ export class DataTableService {
   async update(
     id: string,
     name: string,
-    columns: { id: string; name: string; type: GlobalPrimitive }[],
+    columns?: DataColumn[],
     userId?: number,
   ) {
     const updateData: Partial<DataTable> = { name, columns }
