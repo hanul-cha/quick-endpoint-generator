@@ -1,6 +1,6 @@
 <template>
   <div class="logout-container">
-    <h1>로그아웃 중...</h1>
+    <h1>Logging out...</h1>
   </div>
 </template>
 

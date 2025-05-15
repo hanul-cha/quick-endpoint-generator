@@ -48,13 +48,13 @@
             <div class="space-x-2">
               <button
                 @click="editTable(table)"
-                class="text-indigo-600 hover:text-indigo-800"
+                class="px-3 py-1 text-indigo-600 transition border border-indigo-600 rounded-md hover:bg-indigo-50"
               >
                 Edit
               </button>
               <button
                 @click="deleteTable(table.id)"
-                class="text-red-600 hover:text-red-800"
+                class="px-3 py-1 text-red-600 transition border border-red-600 rounded-md hover:bg-red-50"
               >
                 Delete
               </button>
@@ -142,7 +142,7 @@
           <!-- 컬럼 추가 섹션 -->
           <div class="pt-4 border-t">
             <h3 class="mb-4 text-lg font-medium">Columns</h3>
-            <div class="space-y-4">
+            <div class="pr-2 space-y-4 overflow-y-auto max-h-72">
               <div v-for="(column, index) in editingTable.columns" :key="index" class="grid grid-cols-[1fr,1fr,auto] gap-4 items-start">
                 <div>
                   <label class="block text-sm font-medium text-gray-700">Column Name</label>
@@ -215,6 +215,17 @@
         {{ toastMessage }}
       </div>
     </transition>
+
+    <!-- 삭제 확인 모달 -->
+    <ConfirmModal
+      v-model="showDeleteModal"
+      title="Confirm Deletion"
+      message="Are you sure you want to delete this table?"
+      confirm-text="Delete"
+      confirm-button-color="bg-red-600"
+      confirm-button-hover-color="bg-red-700"
+      @confirm="confirmDeleteTable"
+    />
   </div>
 </template>
 
@@ -222,6 +233,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import type { DataTable } from '../types/data-table'
 import { tableApi } from '../api/table'
+import ConfirmModal from '@/components/ConfirmModal.vue'
 
 interface PaginatedResponse<T> {
   items: T[]
@@ -259,6 +271,9 @@ const errors = ref({
 const copiedId = ref<string | null>(null)
 const showToast = ref(false)
 const toastMessage = ref('')
+
+const showDeleteModal = ref(false)
+const deletingTableId = ref<string | null>(null)
 
 const closeModal = () => {
   showModal.value = false
@@ -309,14 +324,14 @@ const validateForm = () => {
 
   // 테이블 이름 검사
   if (!editingTable.value.name?.trim()) {
-    errors.value.tableName = '테이블 이름은 필수입니다.'
+    errors.value.tableName = 'Table name is required.'
     isValid = false
   }
 
   // 컬럼 이름 검사
   editingTable.value.columns?.forEach((column, index) => {
     if (!column.name?.trim()) {
-      errors.value.columns[index] = '컬럼 이름은 필수입니다.'
+      errors.value.columns[index] = 'Column name is required.'
       isValid = false
     } else {
       errors.value.columns[index] = ''
@@ -345,7 +360,7 @@ const saveTable = async () => {
     closeModal()
   } catch (error) {
     console.error(`Failed to ${isEditing.value ? 'update' : 'create'} table:`, error)
-    alert(`테이블 ${isEditing.value ? '수정' : '생성'} 중 오류가 발생했습니다.`)
+    alert(`An error occurred while ${isEditing.value ? 'updating' : 'creating'} the table.`)
   }
 }
 
@@ -356,12 +371,21 @@ const editTable = (table: DataTable) => {
 }
 
 const deleteTable = async (tableId: string) => {
+  deletingTableId.value = tableId
+  showDeleteModal.value = true
+}
+
+const confirmDeleteTable = async () => {
+  if (!deletingTableId.value) return
+
   try {
-    await tableApi.deleteTable(tableId)
-    tables.value.items = tables.value.items.filter(table => table.id !== tableId)
+    await tableApi.deleteTable(deletingTableId.value)
+    tables.value.items = tables.value.items.filter(table => table.id !== deletingTableId.value)
+    showDeleteModal.value = false
+    deletingTableId.value = null
   } catch (error) {
     console.error('Failed to delete table:', error)
-    alert('테이블 삭제 중 오류가 발생했습니다.')
+    alert('An error occurred while deleting the table.')
   }
 }
 
@@ -376,9 +400,9 @@ const showCopyToast = (msg: string) => {
 const copyId = async (id: string) => {
   try {
     await navigator.clipboard.writeText(id)
-    showCopyToast('복사되었습니다')
+    showCopyToast('Copied')
   } catch (e) {
-    alert('클립보드 복사에 실패했습니다.')
+    alert('Failed to copy to clipboard.')
   }
 }
 
@@ -388,7 +412,7 @@ const loadTables = async (page?: number) => {
     tables.value = await tableApi.getMyTables({ page: page || 1 })
   } catch (error) {
     console.error('Failed to load tables:', error)
-    alert('테이블 목록을 불러오는 중 오류가 발생했습니다.')
+    alert('An error occurred while loading the table list.')
   }
 }
 

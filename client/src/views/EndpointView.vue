@@ -31,26 +31,59 @@
       <div v-else class="space-y-6">
         <div v-for="endpoint in endpoints.items" :key="endpoint.id" class="p-4 border rounded-lg">
           <div class="flex items-center justify-between mb-4">
-            <div>
-              <h3 class="text-lg font-medium">{{ endpoint.name }}</h3>
-              <p class="text-sm text-gray-500">{{ endpoint.method }}</p>
+            <div class="flex flex-col space-y-2">
+              <div class="flex items-center space-x-2">
+                <h3 class="text-lg font-medium">{{ endpoint.name }}</h3>
+                <span class="text-xs text-gray-400">({{ endpoint.id }})</span>
+                <button
+                  @click="copyId(endpoint.id)"
+                  class="ml-1 text-xs text-gray-500 hover:text-indigo-600 focus:outline-none"
+                  title="Copy ID"
+                >
+                  <svg class="inline w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16h8a2 2 0 002-2V8a2 2 0 00-2-2H8a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2" />
+                  </svg>
+                </button>
+                <span class="px-2 py-0.5 text-xs font-medium bg-gray-100 border rounded-full" :class="{
+                  'text-green-700 border-green-300': endpoint.method === 'GET',
+                  'text-blue-700 border-blue-300': endpoint.method === 'POST',
+                  'text-yellow-700 border-yellow-300': endpoint.method === 'PUT',
+                  'text-red-700 border-red-300': endpoint.method === 'DELETE'
+                }">{{ endpoint.method }}</span>
+              </div>
+              <div class="flex items-center">
+                <div class="flex items-center px-3 py-1 mr-2 text-sm text-gray-600 bg-gray-100 border border-gray-300 rounded-md">
+                  {{ getEndpointUrl(endpoint.id) }}
+                </div>
+                <button
+                  @click="copyEndpointUrl(endpoint.id)"
+                  class="text-xs text-gray-500 hover:text-indigo-600 focus:outline-none"
+                  title="Copy Endpoint URL"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16h8a2 2 0 002-2V8a2 2 0 00-2-2H8a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2" />
+                  </svg>
+                </button>
+              </div>
             </div>
             <div class="space-x-2">
               <button
-                @click="testEndpoint(endpoint)"
-                class="text-green-600 hover:text-green-800"
+                @click="runEndpoint(endpoint)"
+                class="px-3 py-1 text-green-600 transition border border-green-600 rounded-md hover:bg-green-50"
               >
-                Test
+                Run Endpoint
               </button>
               <button
                 @click="editEndpoint(endpoint)"
-                class="text-indigo-600 hover:text-indigo-800"
+                class="px-3 py-1 text-indigo-600 transition border border-indigo-600 rounded-md hover:bg-indigo-50"
               >
                 Edit
               </button>
               <button
                 @click="deleteEndpoint(endpoint.id)"
-                class="text-red-600 hover:text-red-800"
+                class="px-3 py-1 text-red-600 transition border border-red-600 rounded-md hover:bg-red-50"
               >
                 Delete
               </button>
@@ -155,7 +188,7 @@
 
           <div>
             <label class="block text-sm font-medium text-gray-700">Parameter</label>
-            <div class="mt-4 space-y-4">
+            <div class="pr-2 mt-4 space-y-4 overflow-y-auto max-h-72">
               <div v-for="(field, index) in parameterFields" :key="index" class="grid grid-cols-[1fr,1fr,auto,auto] gap-4 items-start">
                 <div>
                   <label class="block text-sm font-medium text-gray-700">Key</label>
@@ -238,7 +271,7 @@
     >
       <div class="w-full max-w-2xl p-6 bg-white border border-gray-200 rounded-lg">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-xl font-semibold">Test Endpoint</h2>
+          <h2 class="text-xl font-semibold">Run Endpoint</h2>
           <button
             @click="closeTestModal"
             class="text-gray-500 hover:text-gray-700"
@@ -349,6 +382,24 @@
         </div>
       </div>
     </div>
+
+    <!-- Toast 알림 -->
+    <transition name="fade">
+      <div v-if="showToast" class="fixed z-50 px-6 py-3 text-white transform -translate-x-1/2 bg-green-500 rounded shadow-lg bottom-8 left-1/2">
+        {{ toastMessage }}
+      </div>
+    </transition>
+
+    <!-- 삭제 확인 모달 -->
+    <ConfirmModal
+      v-model="showDeleteModal"
+      title="Confirm Deletion"
+      message="Are you sure you want to delete this endpoint?"
+      confirm-text="Delete"
+      confirm-button-color="bg-red-600"
+      confirm-button-hover-color="bg-red-700"
+      @confirm="confirmDeleteEndpoint"
+    />
   </div>
 </template>
 
@@ -357,6 +408,7 @@ import { ref, onMounted, onUnmounted, watch } from 'vue'
 import type { Endpoint, Parameter, ParameterFieldWithKey, ParameterType } from '@/types/endpoint'
 import { endpointApi } from '@/api/endpoint'
 import CodeEditor from '@/components/CodeEditor.vue'
+import ConfirmModal from '@/components/ConfirmModal.vue'
 
 interface PaginatedResponse<T> {
   items: T[]
@@ -483,18 +535,35 @@ const editEndpoint = (endpoint: Endpoint) => {
   showModal.value = true
 }
 
+// 상태 변수 추가
+const showDeleteModal = ref(false)
+const deletingEndpointId = ref<string | null>(null)
+
+// 기존 deleteEndpoint 함수 수정
 const deleteEndpoint = async (endpointId: string) => {
-  if (!confirm('정말로 이 엔드포인트를 삭제하시겠습니까?')) {
-    return
-  }
+  deletingEndpointId.value = endpointId
+  showDeleteModal.value = true
+}
+
+// 실제 삭제 함수 추가
+const confirmDeleteEndpoint = async () => {
+  if (!deletingEndpointId.value) return
 
   try {
-    await endpointApi.deleteEndpoint(endpointId)
-    endpoints.value.items = endpoints.value.items.filter(endpoint => endpoint.id !== endpointId)
+    await endpointApi.deleteEndpoint(deletingEndpointId.value)
+    endpoints.value.items = endpoints.value.items.filter(endpoint => endpoint.id !== deletingEndpointId.value)
+    showDeleteModal.value = false
+    deletingEndpointId.value = null
   } catch (error) {
     console.error('Failed to delete endpoint:', error)
-    alert('엔드포인트 삭제 중 오류가 발생했습니다.')
+    alert('An error occurred while deleting the endpoint.')
   }
+}
+
+// 모달 취소 함수
+const cancelDeleteEndpoint = () => {
+  showDeleteModal.value = false
+  deletingEndpointId.value = null
 }
 
 const validateForm = () => {
@@ -569,9 +638,9 @@ const isLoading = ref(false)
 const errorMessage = ref<string | null>(null)
 
 // 테스트 모달 열기
-const testEndpoint = (endpoint: Endpoint) => {
+const runEndpoint = (endpoint: Endpoint) => {
   currentEndpoint.value = endpoint
-  testUrl.value = `${import.meta.env.VITE_API_URL}/run/${endpoint.id}`
+  testUrl.value = getEndpointUrl(endpoint.id)
 
   // 파라미터 초기화
   testParameters.value = {}
@@ -743,6 +812,42 @@ const openCreateModal = () => {
   showModal.value = true
 }
 
+const showToast = ref(false)
+const toastMessage = ref('')
+
+const copyId = async (id: string) => {
+  try {
+    await navigator.clipboard.writeText(id)
+    showCopyToast('Copied')
+  } catch (e) {
+    alert('Failed to copy to clipboard.')
+  }
+}
+
+const showCopyToast = (msg: string) => {
+  toastMessage.value = msg
+  showToast.value = true
+  setTimeout(() => {
+    showToast.value = false
+  }, 1500)
+}
+
+// 엔드포인트 URL 가져오기
+const getEndpointUrl = (endpointId: string): string => {
+  return `${import.meta.env.VITE_API_URL}/run/${endpointId}`
+}
+
+// 엔드포인트 URL 복사
+const copyEndpointUrl = async (endpointId: string) => {
+  try {
+    const url = getEndpointUrl(endpointId)
+    await navigator.clipboard.writeText(url)
+    showCopyToast('URL Copied')
+  } catch (e) {
+    alert('Failed to copy URL to clipboard.')
+  }
+}
+
 // 초기 데이터 로드
 loadEndpoints()
 </script>
@@ -768,5 +873,12 @@ input.border-gray-300:focus, select.border-gray-300:focus, textarea.border-gray-
   width: 100%;
   margin-top: 8px;
   margin-bottom: 8px;
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
 }
 </style>

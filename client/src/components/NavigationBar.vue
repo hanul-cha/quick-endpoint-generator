@@ -5,7 +5,7 @@
       </div>
       <div class="flex gap-x-8">
         <router-link to="/logout" class="text-sm font-semibold leading-6 text-gray-900 hover:text-blue-600">
-          로그아웃
+          Logout
         </router-link>
       </div>
     </nav>
