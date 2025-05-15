@@ -26,9 +26,9 @@ export function createLimitedRepository(
         }
         return table
       },
-      findAll: async (options?: any) => {
+      findAll: async (where?: any) => {
         // userId로 필터링
-        return appService.dataTableService.findByUserId(userId, options)
+        return appService.dataTableService.findByUserId(userId, where)
       },
       find: async (where?: any, options?: any) => {
         // userId로 필터링
@@ -114,6 +114,11 @@ export function createLimitedRepository(
         return appService.dataTableService.remove(id)
       },
       // 추가 제한된 메서드들...
+    },
+    row: {
+      findAll: async (options?: any) => {
+        return appService.dataRowService.findByUserId(userId, options)
+      },
     },
   }
 }

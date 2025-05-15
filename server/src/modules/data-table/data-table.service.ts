@@ -66,32 +66,20 @@ export class DataTableService {
 
   async findByUserId(
     userId: number,
-    options?: PaginationOptions,
-  ): Promise<PaginatedResult<DataTable>> {
-    const { page = 1, limit = 10, offset = 0 } = options || {}
-    const skip = offset || (page - 1) * limit
-
-    const [items, total] = await this.dataTableRepository.findAndCount({
-      where: { userId },
-      skip,
-      take: limit,
+    where?: FindOptionsWhere<DataTable>,
+  ): Promise<DataTable[]> {
+    return await this.dataTableRepository.find({
+      where: {
+        userId,
+        ...where,
+      },
       order: { createdAt: 'DESC' },
     })
+  }
 
-    const totalPages = Math.ceil(total / limit)
-    const hasNextPage = skip + items.length < total
-    const hasPreviousPage = page > 1
-
-    return {
-      items,
-      total,
-      page,
-      limit,
-      totalPages,
-      hasNextPage,
-      hasPreviousPage,
-      offset: skip,
-    }
+  async findTableIdsByUserId(userId: number) {
+    const tables = await this.dataTableRepository.find({ where: { userId } })
+    return tables.map((table) => table.id)
   }
 
   async findOne(id: string) {

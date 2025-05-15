@@ -13,7 +13,7 @@ import { DataTableService, PaginationOptions } from './data-table.service'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { CurrentUser } from '../auth/decorators/current-user.decorator'
 import { User } from '../users/entities/user.entity'
-import { DataColumn } from './data-table.entity'
+import { DataColumn, DataTable } from './data-table.entity'
 
 @Controller('data-tables')
 @UseGuards(JwtAuthGuard)
@@ -44,14 +44,9 @@ export class DataTableController {
   @Get('my')
   async findByCurrentUser(
     @CurrentUser() user: User,
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
+    @Query('where') where?: Partial<DataTable>,
   ) {
-    const options: PaginationOptions = {
-      page: page ? parseInt(page.toString()) : 1,
-      limit: limit ? parseInt(limit.toString()) : 10,
-    }
-    return await this.dataTableService.findByUserId(user.id, options)
+    return await this.dataTableService.findByUserId(user.id, where)
   }
 
   @Get(':id')

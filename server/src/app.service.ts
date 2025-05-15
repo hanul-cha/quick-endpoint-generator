@@ -2,6 +2,7 @@ import * as vm from 'vm'
 
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
 
+import { DataRowService } from './modules/data-row/data-row.service'
 import { DataTableService } from './modules/data-table/data-table.service'
 import { EndpointParameter } from './modules/endpoint/endpoint.entity'
 import { EndpointService } from './modules/endpoint/endpoint.service'
@@ -18,6 +19,7 @@ export class AppService {
   constructor(
     private readonly endpointService: EndpointService,
     readonly dataTableService: DataTableService,
+    readonly dataRowService: DataRowService,
   ) {}
 
   async runEndpoint(endpointId: string, options: EndpointRunOptions) {

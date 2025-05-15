@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
+import { In, Repository } from 'typeorm'
 import { DataRow } from './data-row.entity'
 import { DataTableService } from '../data-table/data-table.service'
 import {
@@ -71,33 +71,18 @@ export class DataRowService {
   }
 
   async findByUserId(
-    userId: string,
-    options?: PaginationOptions,
-  ): Promise<PaginatedResult<DataRow>> {
-    const { page = 1, limit = 10, offset = 0 } = options || {}
-    const skip = offset || (page - 1) * limit
+    userId: number,
+    where?: Partial<DataRow>,
+  ): Promise<DataRow[]> {
+    const tableIds = await this.dataTableService.findTableIdsByUserId(userId)
 
-    const [items, total] = await this.dataRowRepository.findAndCount({
-      where: { userId },
-      skip,
-      take: limit,
+    return await this.dataRowRepository.find({
+      where: {
+        dataTableId: In(tableIds),
+        ...where,
+      },
       order: { createdAt: 'DESC' },
     })
-
-    const totalPages = Math.ceil(total / limit)
-    const hasNextPage = skip + items.length < total
-    const hasPreviousPage = page > 1
-
-    return {
-      items,
-      total,
-      page,
-      limit,
-      totalPages,
-      hasNextPage,
-      hasPreviousPage,
-      offset: skip,
-    }
   }
 
   async findOne(id: string) {
