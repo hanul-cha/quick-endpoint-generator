@@ -3,7 +3,7 @@
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-3xl font-bold">Endpoints</h1>
       <button
-        @click="showModal = true"
+        @click="openCreateModal"
         class="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
       >
         Create Endpoint
@@ -20,7 +20,7 @@
         <p class="mt-1 text-sm text-gray-500">Get started by creating a new endpoint.</p>
         <div class="mt-6">
           <button
-            @click="showModal = true"
+            @click="openCreateModal"
             class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
             Create Endpoint
@@ -142,7 +142,11 @@
           <div>
             <label class="block text-sm font-medium text-gray-700">Script</label>
             <div class="editor-container">
-              <CodeEditor v-model="editingEndpoint.script" :height="150" />
+              <CodeEditor
+                v-model="editingEndpoint.script"
+                :height="150"
+                :parameter="editingEndpoint.parameter"
+              />
             </div>
             <p v-if="errors.script" class="mt-1 text-sm text-red-600">
               {{ errors.script }}
@@ -159,6 +163,7 @@
                     v-model="field.key"
                     type="text"
                     class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:border-indigo-500 focus:outline-none"
+                    @input="updateParameter"
                   />
                 </div>
                 <div>
@@ -166,6 +171,7 @@
                   <select
                     v-model="field.type"
                     class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:border-indigo-500 focus:outline-none"
+                    @change="updateParameter"
                   >
                     <option value="String">String</option>
                     <option value="Number">Number</option>
@@ -180,6 +186,7 @@
                       type="checkbox"
                       v-model="field.required"
                       class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      @change="updateParameter"
                     />
                     <span class="text-sm text-gray-700">Required</span>
                   </label>
@@ -346,7 +353,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import type { Endpoint, Parameter, ParameterFieldWithKey, ParameterType } from '@/types/endpoint'
 import { endpointApi } from '@/api/endpoint'
 import CodeEditor from '@/components/CodeEditor.vue'
@@ -397,13 +404,19 @@ const addField = () => {
     type: 'String',
     required: false
   })
+  // 파라미터 필드 추가 후 즉시 업데이트
+  updateParameter()
 }
 
 const removeField = (index: number) => {
   parameterFields.value.splice(index, 1)
+  // 파라미터 필드 제거 후 즉시 업데이트
+  updateParameter()
 }
 
-const updateParameter = () => {
+// parameterFields 배열의 요소가 변경될 때마다 parameter 업데이트
+const updateParameterFields = () => {
+  // 엔드포인트 파라미터 업데이트
   const parameterObj: Parameter = {}
   for (const field of parameterFields.value) {
     if (field.key.trim()) {
@@ -416,23 +429,12 @@ const updateParameter = () => {
   editingEndpoint.value.parameter = parameterObj
 }
 
+const updateParameter = () => {
+  updateParameterFields()
+}
+
 const closeModal = () => {
   showModal.value = false
-  isEditing.value = false
-  editingEndpoint.value = {
-    name: '',
-    method: 'GET',
-    script: '',
-    parameter: {}
-  }
-  parameterFields.value = []
-  errors.value = {
-    name: '',
-    method: '',
-    parameterType: '',
-    script: '',
-    parameter: ''
-  }
 }
 
 const handleEscKey = (event: KeyboardEvent) => {
@@ -477,19 +479,7 @@ const loadEndpoints = async (page?: number) => {
 
 const editEndpoint = (endpoint: Endpoint) => {
   isEditing.value = true
-  editingEndpoint.value = {
-    id: endpoint.id,
-    name: endpoint.name,
-    method: endpoint.method,
-    script: endpoint.script,
-    parameter: endpoint.parameter
-  }
-  // parameter 객체를 fields 배열로 변환
-  parameterFields.value = Object.entries(endpoint.parameter || {}).map(([key, param]) => ({
-    key,
-    type: param.type,
-    required: param.required
-  }))
+  prepareEditingEndpoint(endpoint)
   showModal.value = true
 }
 
@@ -688,6 +678,69 @@ const sendTestRequest = async () => {
   } finally {
     isLoading.value = false
   }
+}
+
+// 모달이 열릴 때 parameter 변환 로직
+const prepareEditingEndpoint = (endpoint?: Endpoint) => {
+  if (endpoint) {
+    // 기존 엔드포인트 수정
+    editingEndpoint.value = {
+      id: endpoint.id,
+      name: endpoint.name,
+      method: endpoint.method,
+      script: endpoint.script || '',
+      parameter: endpoint.parameter || {}
+    }
+    // parameter 객체를 fields 배열로 변환
+    parameterFields.value = Object.entries(endpoint.parameter || {}).map(([key, param]) => ({
+      key,
+      type: param.type,
+      required: param.required
+    }))
+  } else {
+    // 새 엔드포인트 생성
+    editingEndpoint.value = {
+      name: '',
+      method: 'GET',
+      script: '',
+      parameter: {}
+    }
+    parameterFields.value = []
+  }
+
+  // parameter 초기 설정
+  updateParameter()
+}
+
+// 모달 창 열기/닫기 시 로직 처리
+watch(showModal, (isOpen) => {
+  if (isOpen) {
+    // 모달이 열릴 때는 아무 작업 없음 (이미 prepareEditingEndpoint에서 처리)
+  } else {
+    // 모달이 닫힐 때는 상태 초기화
+    isEditing.value = false
+    editingEndpoint.value = {
+      name: '',
+      method: 'GET',
+      script: '',
+      parameter: {}
+    }
+    parameterFields.value = []
+    errors.value = {
+      name: '',
+      method: '',
+      parameterType: '',
+      script: '',
+      parameter: ''
+    }
+  }
+})
+
+// "Create Endpoint" 버튼 클릭 시
+const openCreateModal = () => {
+  isEditing.value = false
+  prepareEditingEndpoint() // 새 엔드포인트 준비
+  showModal.value = true
 }
 
 // 초기 데이터 로드

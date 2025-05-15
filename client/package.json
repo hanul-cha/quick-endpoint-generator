@@ -9,10 +9,17 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@guolao/vue-monaco-editor": "^1.5.5",
+    "@codemirror/autocomplete": "^6.18.6",
+    "@codemirror/commands": "^6.8.1",
+    "@codemirror/lang-javascript": "^6.2.4",
+    "@codemirror/language": "^6.11.0",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/theme-one-dark": "^6.1.2",
+    "@codemirror/view": "^6.36.8",
     "axios": "^1.8.4",
     "socket.io-client": "^4.8.1",
     "vue": "^3.5.13",
+    "vue-codemirror": "^6.1.1",
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
