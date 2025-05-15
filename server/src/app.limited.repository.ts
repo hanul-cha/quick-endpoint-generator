@@ -2,6 +2,7 @@ import { HttpException, HttpStatus } from '@nestjs/common'
 
 import { AppService } from './app.service'
 import { DataTable } from './modules/data-table/data-table.entity'
+import { PaginationOptions } from './util/pagination'
 import { validate } from 'class-validator'
 
 /**
@@ -17,6 +18,9 @@ export function createLimitedRepository(
     table: {
       findOne: async (id: string) => {
         // userId로 접근 제한
+        if (!id) {
+          throw new HttpException('id is required', HttpStatus.BAD_REQUEST)
+        }
         const table = await appService.dataTableService.findOne(id)
         if (table?.userId !== userId) {
           throw new HttpException(
@@ -26,21 +30,21 @@ export function createLimitedRepository(
         }
         return table
       },
-      findAll: async (where?: any) => {
+      findAll: async (where?: object) => {
         // userId로 필터링
         return appService.dataTableService.findAll({
           ...where,
           userId,
         })
       },
-      find: async (where?: any, options?: any) => {
+      find: async (where?: object, options?: PaginationOptions) => {
         // userId로 필터링
         return appService.dataTableService.paginate(
           { ...where, userId: userId },
           options,
         )
       },
-      create: async (data: any) => {
+      create: async (data: object) => {
         // DataTable 인스턴스 생성
         const table = new DataTable()
         Object.assign(table, {
@@ -69,7 +73,7 @@ export function createLimitedRepository(
           userId,
         )
       },
-      update: async (id: string, data: any) => {
+      update: async (id: string, data: object) => {
         // 먼저 테이블이 존재하고 권한이 있는지 확인
         const existingTable = await appService.dataTableService.findOne(id)
         if (!existingTable || existingTable.userId !== userId) {
@@ -105,7 +109,10 @@ export function createLimitedRepository(
         const { name, columns } = table
         return appService.dataTableService.update(id, name, columns, userId)
       },
-      delete: async (id: string) => {
+      delete: async (id?: string) => {
+        if (!id) {
+          throw new HttpException('id is required', HttpStatus.BAD_REQUEST)
+        }
         // 먼저 테이블이 존재하고 권한이 있는지 확인
         const table = await appService.dataTableService.findOne(id)
         if (!table || table.userId !== userId) {
@@ -119,11 +126,61 @@ export function createLimitedRepository(
       // 추가 제한된 메서드들...
     },
     row: {
-      findAll: async (options?: any) => {
-        return appService.dataRowService.findAllByUserId(userId, options)
+      findOne: async (id?: string) => {
+        if (!id) {
+          throw new HttpException('id is required', HttpStatus.BAD_REQUEST)
+        }
+        const row = await appService.dataRowService.findOne(id)
+
+        const dataTable = await appService.dataTableService.findOne(
+          row.dataTableId,
+        )
+        if (!dataTable || dataTable.userId !== userId) {
+          throw new HttpException(
+            'Access denied to this table',
+            HttpStatus.FORBIDDEN,
+          )
+        }
+        return row
       },
-      find: async (options?: any) => {
-        return appService.dataRowService.paginateByUserId(userId, options)
+      findAll: async (where?: object) => {
+        return appService.dataRowService.findAllByUserId(userId, where)
+      },
+      find: async (where?: object, options?: PaginationOptions) => {
+        return appService.dataRowService.paginateByUserId(
+          userId,
+          where,
+          options,
+        )
+      },
+      create: async (data: {
+        dataTableId?: string
+        values?: Record<string, any>
+      }) => {
+        if (!data.dataTableId) {
+          throw new HttpException(
+            'dataTableId is required',
+            HttpStatus.BAD_REQUEST,
+          )
+        }
+
+        try {
+          return appService.dataRowService.create(data.dataTableId, data.values)
+        } catch (error) {
+          throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
+        }
+      },
+      update: async (id?: string, data?: object) => {
+        if (!id) {
+          throw new HttpException('id is required', HttpStatus.BAD_REQUEST)
+        }
+        return appService.dataRowService.update(id, data)
+      },
+      delete: async (id?: string) => {
+        if (!id) {
+          throw new HttpException('id is required', HttpStatus.BAD_REQUEST)
+        }
+        return appService.dataRowService.remove(id)
       },
     },
   }

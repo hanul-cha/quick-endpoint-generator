@@ -5,6 +5,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm'
+import { IsObject, IsOptional, IsUUID } from 'class-validator'
 
 import { DataTable } from '../data-table/data-table.entity'
 
@@ -14,6 +15,7 @@ export class DataRow {
   id: string
 
   @Column('uuid')
+  @IsUUID()
   dataTableId: string
 
   @ManyToOne(() => DataTable, (dataTable) => dataTable.dataRows)
@@ -21,7 +23,9 @@ export class DataRow {
   dataTable: DataTable
 
   @Column('jsonb')
-  values: Record<string, any>
+  @IsObject()
+  @IsOptional()
+  values?: Record<string, any>
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date

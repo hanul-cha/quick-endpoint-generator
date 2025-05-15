@@ -8,6 +8,7 @@ import {
   PaginatedResult,
   PaginationOptions,
 } from 'src/util/pagination'
+import { DataTable } from '../data-table/data-table.entity'
 
 @Injectable()
 export class DataRowService {
@@ -17,7 +18,7 @@ export class DataRowService {
     private dataTableService: DataTableService,
   ) {}
 
-  async create(dataTableId: string, values: Record<string, any>) {
+  async create(dataTableId: string, values?: Record<string, any>) {
     // 데이터 테이블이 존재하는지 확인
     const dataTable = await this.dataTableService.findOne(dataTableId)
     if (!dataTable) {
@@ -25,14 +26,7 @@ export class DataRowService {
     }
 
     // 컬럼 ID가 모두 존재하는지 확인
-    const columnIds = dataTable.columns?.map((col) => col.id) || []
-    const valueColumnIds = Object.keys(values)
-    const invalidColumnIds = valueColumnIds.filter(
-      (id) => !columnIds.includes(id),
-    )
-    if (invalidColumnIds.length > 0) {
-      throw new Error(`Invalid column IDs: ${invalidColumnIds.join(', ')}`)
-    }
+    await this.validateColumnIds(dataTable, values)
 
     const dataRow = this.dataRowRepository.create({
       dataTableId,
@@ -121,22 +115,14 @@ export class DataRowService {
     return await this.dataRowRepository.findOne({ where: { id } })
   }
 
-  async update(id: string, values: Record<string, any>) {
+  async update(id: string, values?: Record<string, any>) {
     const dataRow = await this.findOne(id)
     if (!dataRow) {
       throw new Error('DataRow not found')
     }
 
     // 데이터 테이블의 컬럼 ID가 모두 존재하는지 확인
-    const dataTable = await this.dataTableService.findOne(dataRow.dataTableId)
-    const columnIds = dataTable.columns?.map((col) => col.id) || []
-    const valueColumnIds = Object.keys(values)
-    const invalidColumnIds = valueColumnIds.filter(
-      (id) => !columnIds.includes(id),
-    )
-    if (invalidColumnIds.length > 0) {
-      throw new Error(`Invalid column IDs: ${invalidColumnIds.join(', ')}`)
-    }
+    await this.validateColumnIds(dataRow.dataTable, values)
 
     await this.dataRowRepository.update(id, { values })
     return await this.findOne(id)
@@ -144,5 +130,19 @@ export class DataRowService {
 
   async remove(id: string) {
     return await this.dataRowRepository.delete(id)
+  }
+
+  private async validateColumnIds(
+    dataTable: DataTable,
+    values?: Record<string, any>,
+  ) {
+    const columnIds = dataTable.columns?.map((col) => col.id) || []
+    const valueColumnIds = Object.keys(values || {})
+    const invalidColumnIds = valueColumnIds.filter(
+      (id) => !columnIds.includes(id),
+    )
+    if (invalidColumnIds.length > 0) {
+      throw new Error(`Invalid column IDs: ${invalidColumnIds.join(', ')}`)
+    }
   }
 }

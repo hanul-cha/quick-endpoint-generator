@@ -12,13 +12,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, shallowRef, onMounted, watch } from 'vue'
+import { computed, ref, shallowRef, watch } from 'vue'
 import { Codemirror } from 'vue-codemirror'
 import { javascript } from '@codemirror/lang-javascript'
 import { EditorState } from '@codemirror/state'
-import { EditorView, keymap, ViewUpdate } from '@codemirror/view'
+import { EditorView } from '@codemirror/view'
 import { oneDark } from '@codemirror/theme-one-dark'
-import { autocompletion, CompletionContext, startCompletion, completeFromList } from '@codemirror/autocomplete'
+import { autocompletion, CompletionContext, startCompletion } from '@codemirror/autocomplete'
 import { basicSetup } from 'codemirror'
 import type { Parameter } from '@/types/endpoint'
 
@@ -80,7 +80,6 @@ function updateParamOptions(params?: Parameter) {
 
 // repo 객체의 자동완성 함수
 function repoCompletions(context: CompletionContext) {
-  const word = context.matchBefore(/\w+\b\.?/)
   const line = context.state.doc.lineAt(context.pos)
   const lineText = line.text.slice(0, context.pos - line.from)
 
@@ -101,7 +100,8 @@ function repoCompletions(context: CompletionContext) {
     return {
       from: context.pos,
       options: [
-        { label: 'table', type: 'property', info: 'Object for table operations' }
+        { label: 'table', type: 'property', info: 'Object for table operations' },
+        { label: 'row', type: 'property', info: 'Object for row operations' }
       ]
     }
   }
@@ -112,11 +112,26 @@ function repoCompletions(context: CompletionContext) {
       from: context.pos,
       options: [
         { label: 'findOne', type: 'method', info: 'Find a table by ID', apply: 'findOne(id)' },
-        { label: 'findAll', type: 'method', info: 'Find all tables', apply: 'findAll(options)' },
+        { label: 'findAll', type: 'method', info: 'Find all tables', apply: 'findAll(where)' },
         { label: 'find', type: 'method', info: 'Find tables by conditions', apply: 'find(where, options)' },
-        { label: 'create', type: 'method', info: 'Create a new table', apply: 'create({\n\tname: "tableName"\n})' },
+        { label: 'create', type: 'method', info: 'Create a new table', apply: 'create({\n    name: "tableName",\n    columns: []\n  })', },
         { label: 'update', type: 'method', info: 'Update a table', apply: 'update(id, data)' },
         { label: 'delete', type: 'method', info: 'Delete a table', apply: 'delete(id)' }
+      ]
+    }
+  }
+
+  // repo.row. 다음 자동완성 (메서드)
+  if (/repo\.row\.\s*$/.test(lineText)) {
+    return {
+      from: context.pos,
+      options: [
+        { label: 'findOne', type: 'method', info: 'Find a row by ID', apply: 'findOne(id)' },
+        { label: 'findAll', type: 'method', info: 'Find all rows', apply: 'findAll(where)' },
+        { label: 'find', type: 'method', info: 'Find rows by conditions', apply: 'find(where, options)' },
+        { label: 'create', type: 'method', info: 'Create a new row', apply: 'create({\n    dataTableId: "tableId",\n    values: {}\n  })', },
+        { label: 'update', type: 'method', info: 'Update a row', apply: 'update(id, data)' },
+        { label: 'delete', type: 'method', info: 'Delete a row', apply: 'delete(id)' }
       ]
     }
   }

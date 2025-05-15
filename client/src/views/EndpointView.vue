@@ -560,12 +560,6 @@ const confirmDeleteEndpoint = async () => {
   }
 }
 
-// 모달 취소 함수
-const cancelDeleteEndpoint = () => {
-  showDeleteModal.value = false
-  deletingEndpointId.value = null
-}
-
 const validateForm = () => {
   errors.value = {
     name: '',
