@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { In, Repository } from 'typeorm'
+import { FindOptionsWhere, In, Repository } from 'typeorm'
 import { DataRow } from './data-row.entity'
 import { DataTableService } from '../data-table/data-table.service'
 import {
-  PaginationOptions,
+  paginate,
   PaginatedResult,
-} from '../data-table/data-table.service'
+  PaginationOptions,
+} from 'src/util/pagination'
 
 @Injectable()
 export class DataRowService {
@@ -40,37 +41,27 @@ export class DataRowService {
     return await this.dataRowRepository.save(dataRow)
   }
 
-  async findAll(
+  async findAllByDataTableId(
     dataTableId: string,
-    options?: PaginationOptions,
-  ): Promise<PaginatedResult<DataRow>> {
-    const { page = 1, limit = 10, offset = 0 } = options || {}
-    const skip = offset || (page - 1) * limit
-
-    const [items, total] = await this.dataRowRepository.findAndCount({
-      where: { dataTableId },
-      skip,
-      take: limit,
+    where?: FindOptionsWhere<DataRow>,
+  ): Promise<DataRow[]> {
+    return await this.dataRowRepository.find({
+      where: {
+        dataTableId,
+        ...where,
+      },
       order: { createdAt: 'DESC' },
     })
-
-    const totalPages = Math.ceil(total / limit)
-    const hasNextPage = skip + items.length < total
-    const hasPreviousPage = page > 1
-
-    return {
-      items,
-      total,
-      page,
-      limit,
-      totalPages,
-      hasNextPage,
-      hasPreviousPage,
-      offset: skip,
-    }
   }
 
-  async findByUserId(
+  async findAll(where?: FindOptionsWhere<DataRow>): Promise<DataRow[]> {
+    return await this.dataRowRepository.find({
+      where,
+      order: { createdAt: 'DESC' },
+    })
+  }
+
+  async findAllByUserId(
     userId: number,
     where?: Partial<DataRow>,
   ): Promise<DataRow[]> {
@@ -83,6 +74,47 @@ export class DataRowService {
       },
       order: { createdAt: 'DESC' },
     })
+  }
+
+  async paginate(
+    where?: FindOptionsWhere<DataRow>,
+    options?: PaginationOptions,
+  ): Promise<PaginatedResult<DataRow>> {
+    return await paginate(this.dataRowRepository, where, options)
+  }
+
+  async paginateByDataTableId(
+    dataTableId: string,
+    where?: FindOptionsWhere<DataRow>,
+    options?: PaginationOptions,
+  ): Promise<PaginatedResult<DataRow>> {
+    const dataTable = await this.dataTableService.findOne(dataTableId)
+    if (!dataTable) {
+      throw new Error('DataTable not found')
+    }
+
+    return await this.paginate(
+      {
+        dataTableId,
+        ...where,
+      },
+      options,
+    )
+  }
+
+  async paginateByUserId(
+    userId: number,
+    where?: FindOptionsWhere<DataRow>,
+    options?: PaginationOptions,
+  ): Promise<PaginatedResult<DataRow>> {
+    const tableIds = await this.dataTableService.findTableIdsByUserId(userId)
+    return await this.paginate(
+      {
+        dataTableId: In(tableIds),
+        ...where,
+      },
+      options,
+    )
   }
 
   async findOne(id: string) {

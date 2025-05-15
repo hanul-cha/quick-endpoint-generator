@@ -15,11 +15,8 @@ import { UpdateEndpointDto } from './dto/update-endpoint.dto'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { CurrentUser } from '../auth/decorators/current-user.decorator'
 import { User } from '../users/entities/user.entity'
-
-interface PaginationOptions {
-  page?: number
-  limit?: number
-}
+import { PaginationOptions } from 'src/util/pagination'
+import { Endpoint } from './endpoint.entity'
 
 @Controller('endpoints')
 @UseGuards(JwtAuthGuard)
@@ -35,12 +32,14 @@ export class EndpointController {
   }
 
   @Get()
-  async findAll(@Query('page') page?: number, @Query('limit') limit?: number) {
-    const options: PaginationOptions = {
-      page: page ? parseInt(page.toString()) : 1,
-      limit: limit ? parseInt(limit.toString()) : 10,
-    }
-    return await this.endpointService.findAll(options)
+  async findAll(
+    @CurrentUser() user: User,
+    @Query('where') where?: Partial<Endpoint>,
+  ) {
+    return await this.endpointService.findAll({
+      userId: user.id,
+      ...where,
+    })
   }
 
   @Get('my')
@@ -53,7 +52,7 @@ export class EndpointController {
       page: page ? parseInt(page.toString()) : 1,
       limit: limit ? parseInt(limit.toString()) : 10,
     }
-    return await this.endpointService.findByUserId(user.id, options)
+    return await this.endpointService.paginate({ userId: user.id }, options)
   }
 
   @Get(':id')

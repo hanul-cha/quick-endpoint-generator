@@ -1,14 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
+import { FindOptionsWhere, Repository } from 'typeorm'
 import { Endpoint } from './endpoint.entity'
 import { CreateEndpointDto } from './dto/create-endpoint.dto'
 import { UpdateEndpointDto } from './dto/update-endpoint.dto'
-
-export interface PaginationOptions {
-  page?: number
-  limit?: number
-}
+import {
+  paginate,
+  PaginatedResult,
+  PaginationOptions,
+} from 'src/util/pagination'
 
 @Injectable()
 export class EndpointService {
@@ -26,53 +26,18 @@ export class EndpointService {
     return await this.endpointRepository.save(endpoint)
   }
 
-  async findAll(options?: PaginationOptions) {
-    const { page = 1, limit = 10 } = options || {}
-    const skip = (page - 1) * limit
-
-    const [items, total] = await this.endpointRepository.findAndCount({
-      skip,
-      take: limit,
+  async findAll(where?: FindOptionsWhere<Endpoint>) {
+    return await this.endpointRepository.find({
+      where,
       order: { createdAt: 'DESC' },
     })
-
-    const totalPages = Math.ceil(total / limit)
-
-    return {
-      items,
-      total,
-      page,
-      limit,
-      totalPages,
-      hasNextPage: page < totalPages,
-      hasPreviousPage: page > 1,
-      offset: skip,
-    }
   }
 
-  async findByUserId(userId: number, options?: PaginationOptions) {
-    const { page = 1, limit = 10 } = options || {}
-    const skip = (page - 1) * limit
-
-    const [items, total] = await this.endpointRepository.findAndCount({
-      where: { userId },
-      skip,
-      take: limit,
-      order: { createdAt: 'DESC' },
-    })
-
-    const totalPages = Math.ceil(total / limit)
-
-    return {
-      items,
-      total,
-      page,
-      limit,
-      totalPages,
-      hasNextPage: page < totalPages,
-      hasPreviousPage: page > 1,
-      offset: skip,
-    }
+  async paginate(
+    where?: FindOptionsWhere<Endpoint>,
+    options?: PaginationOptions,
+  ): Promise<PaginatedResult<Endpoint>> {
+    return await paginate(this.endpointRepository, where, options)
   }
 
   async findOne(id: string) {

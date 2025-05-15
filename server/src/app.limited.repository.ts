@@ -28,11 +28,14 @@ export function createLimitedRepository(
       },
       findAll: async (where?: any) => {
         // userId로 필터링
-        return appService.dataTableService.findByUserId(userId, where)
+        return appService.dataTableService.findAll({
+          ...where,
+          userId,
+        })
       },
       find: async (where?: any, options?: any) => {
         // userId로 필터링
-        return appService.dataTableService.find(
+        return appService.dataTableService.paginate(
           { ...where, userId: userId },
           options,
         )
@@ -117,7 +120,10 @@ export function createLimitedRepository(
     },
     row: {
       findAll: async (options?: any) => {
-        return appService.dataRowService.findByUserId(userId, options)
+        return appService.dataRowService.findAllByUserId(userId, options)
+      },
+      find: async (options?: any) => {
+        return appService.dataRowService.paginateByUserId(userId, options)
       },
     },
   }

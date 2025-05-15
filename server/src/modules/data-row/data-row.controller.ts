@@ -10,11 +10,10 @@ import {
   UseGuards,
 } from '@nestjs/common'
 import { DataRowService } from './data-row.service'
-import { PaginationOptions } from '../data-table/data-table.service'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { CurrentUser } from '../auth/decorators/current-user.decorator'
 import { User } from '../users/entities/user.entity'
-import { DataRow } from './data-row.entity'
+import { PaginationOptions } from 'src/util/pagination'
 
 @Controller('data-rows')
 @UseGuards(JwtAuthGuard)
@@ -32,9 +31,10 @@ export class DataRowController {
     return await this.dataRowService.create(body.dataTableId, body.values)
   }
 
-  @Get('table/:dataTableId')
-  async findAll(
-    @Param('dataTableId') dataTableId: string,
+  @Get('my')
+  async findByCurrentUser(
+    @CurrentUser() user: User,
+    @Query('dataTableId') dataTableId: string,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
   ) {
@@ -42,15 +42,13 @@ export class DataRowController {
       page: page ? parseInt(page.toString()) : 1,
       limit: limit ? parseInt(limit.toString()) : 10,
     }
-    return await this.dataRowService.findAll(dataTableId, options)
-  }
-
-  @Get('my')
-  async findByCurrentUser(
-    @CurrentUser() user: User,
-    @Query('where') where?: Partial<DataRow>,
-  ) {
-    return await this.dataRowService.findByUserId(user.id, where)
+    return await this.dataRowService.paginateByUserId(
+      user.id,
+      {
+        dataTableId,
+      },
+      options,
+    )
   }
 
   @Get(':id')

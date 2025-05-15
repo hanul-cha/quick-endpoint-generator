@@ -9,11 +9,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common'
-import { DataTableService, PaginationOptions } from './data-table.service'
+import { DataTableService } from './data-table.service'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { CurrentUser } from '../auth/decorators/current-user.decorator'
 import { User } from '../users/entities/user.entity'
 import { DataColumn, DataTable } from './data-table.entity'
+import { PaginationOptions } from 'src/util/pagination'
 
 @Controller('data-tables')
 @UseGuards(JwtAuthGuard)
@@ -33,20 +34,27 @@ export class DataTableController {
   }
 
   @Get()
-  async findAll(@Query('page') page?: number, @Query('limit') limit?: number) {
-    const options: PaginationOptions = {
-      page: page ? parseInt(page.toString()) : 1,
-      limit: limit ? parseInt(limit.toString()) : 10,
-    }
-    return await this.dataTableService.findAll(options)
+  async findAll(
+    @CurrentUser() user: User,
+    @Query('where') where?: Partial<DataTable>,
+  ) {
+    return await this.dataTableService.findAll({
+      userId: user.id,
+      ...where,
+    })
   }
 
   @Get('my')
   async findByCurrentUser(
     @CurrentUser() user: User,
-    @Query('where') where?: Partial<DataTable>,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
   ) {
-    return await this.dataTableService.findByUserId(user.id, where)
+    const options: PaginationOptions = {
+      page: page ? parseInt(page.toString()) : 1,
+      limit: limit ? parseInt(limit.toString()) : 10,
+    }
+    return await this.dataTableService.paginate({ userId: user.id }, options)
   }
 
   @Get(':id')
