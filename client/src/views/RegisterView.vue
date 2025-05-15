@@ -1,52 +1,54 @@
 <template>
-  <div class="register-container">
-    <h1>회원가입</h1>
-    <form @submit.prevent="handleSubmit" class="register-form">
-      <div class="form-group">
-        <label for="email">이메일</label>
-        <input
-          type="email"
-          id="email"
-          v-model="formData.email"
-          required
-          placeholder="이메일을 입력하세요"
-        />
-      </div>
-      <div class="form-group">
-        <label for="password">비밀번호</label>
-        <input
-          type="password"
-          id="password"
-          v-model="formData.password"
-          required
-          placeholder="비밀번호를 입력하세요"
-        />
-      </div>
-      <div class="form-group">
-        <label for="confirmPassword">비밀번호 확인</label>
-        <input
-          type="password"
-          id="confirmPassword"
-          v-model="formData.confirmPassword"
-          required
-          placeholder="비밀번호를 다시 입력하세요"
-        />
-      </div>
-      <div class="form-group">
-        <label for="name">이름</label>
-        <input
-          type="text"
-          id="name"
-          v-model="formData.name"
-          required
-          placeholder="이름을 입력하세요"
-        />
-      </div>
-      <button type="submit" class="submit-btn">회원가입</button>
-      <div class="login-link">
-        이미 계정이 있으신가요? <router-link to="/login">로그인</router-link>
-      </div>
-    </form>
+  <div class="register-wrapper">
+    <div class="register-container">
+      <h1>Register</h1>
+      <form @submit.prevent="handleSubmit" class="register-form">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input
+            type="email"
+            id="email"
+            v-model="formData.email"
+            required
+            placeholder="Enter your email"
+          />
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            v-model="formData.password"
+            required
+            placeholder="Enter your password"
+          />
+        </div>
+        <div class="form-group">
+          <label for="confirmPassword">Confirm Password</label>
+          <input
+            type="password"
+            id="confirmPassword"
+            v-model="formData.confirmPassword"
+            required
+            placeholder="Re-enter your password"
+          />
+        </div>
+        <div class="form-group">
+          <label for="name">Name</label>
+          <input
+            type="text"
+            id="name"
+            v-model="formData.name"
+            required
+            placeholder="Enter your name"
+          />
+        </div>
+        <button type="submit" class="submit-btn">Register</button>
+        <div class="login-link">
+          Already have an account? <router-link to="/login">Login</router-link>
+        </div>
+      </form>
+    </div>
   </div>
 </template>
 
@@ -64,7 +66,7 @@ const formData = ref({
 
 const handleSubmit = async () => {
   if (formData.value.password !== formData.value.confirmPassword) {
-    alert('비밀번호가 일치하지 않습니다.');
+    alert('Passwords do not match.');
     return;
   }
 
@@ -82,22 +84,29 @@ const handleSubmit = async () => {
     });
 
     if (response.ok) {
-      alert('회원가입이 완료되었습니다.');
+      alert('Registration completed successfully.');
       router.push('/login');
     } else {
-      alert('회원가입에 실패했습니다.');
+      alert('Registration failed.');
     }
   } catch (error) {
-    console.error('회원가입 에러:', error);
-    alert('회원가입 중 오류가 발생했습니다.');
+    console.error('Registration error:', error);
+    alert('An error occurred during registration.');
   }
 };
 </script>
 
 <style scoped>
+.register-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
 .register-container {
   max-width: 400px;
-  margin: 50px auto;
+  width: 100%;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);

@@ -4,13 +4,35 @@
       <div class="flex lg:flex-1">
       </div>
       <div class="flex gap-x-8">
-        <router-link to="/logout" class="text-sm font-semibold leading-6 text-gray-900 hover:text-blue-600">
+        <a href="#" @click.prevent="showLogoutConfirm = true" class="text-sm font-semibold leading-6 text-gray-900 hover:text-blue-600">
           Logout
-        </router-link>
+        </a>
       </div>
     </nav>
   </header>
+
+  <ConfirmModal
+    v-model="showLogoutConfirm"
+    title="Logout"
+    message="Are you sure you want to logout?"
+    confirm-text="Logout"
+    cancel-text="Cancel"
+    confirm-button-color="bg-red-600"
+    confirm-button-hover-color="bg-red-700"
+    @confirm="logout"
+  />
 </template>
 
 <script setup>
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import ConfirmModal from './ConfirmModal.vue';
+
+const router = useRouter();
+const showLogoutConfirm = ref(false);
+
+const logout = () => {
+  showLogoutConfirm.value = false;
+  router.push('/logout');
+};
 </script>

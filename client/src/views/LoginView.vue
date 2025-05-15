@@ -1,32 +1,34 @@
 <template>
-  <div class="login-container">
-    <h1>로그인</h1>
-    <form @submit.prevent="handleSubmit" class="login-form">
-      <div class="form-group">
-        <label for="email">이메일</label>
-        <input
-          type="email"
-          id="email"
-          v-model="formData.email"
-          required
-          placeholder="이메일을 입력하세요"
-        />
-      </div>
-      <div class="form-group">
-        <label for="password">비밀번호</label>
-        <input
-          type="password"
-          id="password"
-          v-model="formData.password"
-          required
-          placeholder="비밀번호를 입력하세요"
-        />
-      </div>
-      <button type="submit" class="submit-btn">로그인</button>
-      <div class="register-link">
-        계정이 없으신가요? <router-link to="/register">회원가입</router-link>
-      </div>
-    </form>
+  <div class="login-wrapper">
+    <div class="login-container">
+      <h1>Login</h1>
+      <form @submit.prevent="handleSubmit" class="login-form">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input
+            type="email"
+            id="email"
+            v-model="formData.email"
+            required
+            placeholder="Enter your email"
+          />
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            v-model="formData.password"
+            required
+            placeholder="Enter your password"
+          />
+        </div>
+        <button type="submit" class="submit-btn">Login</button>
+        <div class="register-link">
+          Don't have an account? <router-link to="/register">Register</router-link>
+        </div>
+      </form>
+    </div>
   </div>
 </template>
 
@@ -53,7 +55,7 @@ const handleSubmit = async () => {
     if (response.ok) {
       const data = await response.json();
       localStorage.setItem('token', data.access_token);
-      router.push('/data/schema');
+      router.push('/data/endpoint');
     } else {
       alert('로그인에 실패했습니다.');
     }
@@ -65,9 +67,16 @@ const handleSubmit = async () => {
 </script>
 
 <style scoped>
+.login-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
 .login-container {
   max-width: 400px;
-  margin: 50px auto;
+  width: 100%;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
