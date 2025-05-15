@@ -12,7 +12,7 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/data/schema'
+      redirect: '/data/endpoint'
     },
     // {
     //   path: '/chat',
@@ -43,7 +43,7 @@ const router = createRouter({
       children: [
         {
           path: '',
-          redirect: '/data/schema'
+          redirect: '/data/endpoint'
         },
         {
           path: 'schema',
