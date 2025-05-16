@@ -189,42 +189,44 @@
           <div>
             <label class="block text-sm font-medium text-gray-700">Parameter</label>
             <div class="pr-2 mt-4 space-y-4 overflow-y-auto max-h-72">
-              <div v-for="(field, index) in parameterFields" :key="index" class="grid grid-cols-[1fr,1fr,auto,auto] gap-4 items-start">
-                <div>
-                  <label class="block text-sm font-medium text-gray-700">Key</label>
-                  <input
-                    v-model="field.key"
-                    type="text"
-                    class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:border-indigo-500 focus:outline-none"
-                    @input="updateParameter"
-                  />
+              <div v-for="(field, index) in parameterFields" :key="index" class="space-y-2">
+                <div class="flex">
+                  <div class="w-1/2 pr-2">
+                    <label class="block text-sm font-medium text-gray-700">Key</label>
+                    <input
+                      v-model="field.key"
+                      type="text"
+                      class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:border-indigo-500 focus:outline-none"
+                      @input="updateParameter"
+                    />
+                  </div>
+                  <div class="w-1/2 pl-2">
+                    <label class="block text-sm font-medium text-gray-700">Type</label>
+                    <select
+                      v-model="field.type"
+                      class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:border-indigo-500 focus:outline-none"
+                      @change="updateParameter"
+                    >
+                      <option value="String">String</option>
+                      <option value="Number">Number</option>
+                      <option value="Boolean">Boolean</option>
+                      <option value="Object">Object</option>
+                      <option value="Array">Array</option>
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700">Type</label>
-                  <select
-                    v-model="field.type"
-                    class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:border-indigo-500 focus:outline-none"
-                    @change="updateParameter"
-                  >
-                    <option value="String">String</option>
-                    <option value="Number">Number</option>
-                    <option value="Boolean">Boolean</option>
-                    <option value="Object">Object</option>
-                    <option value="Array">Array</option>
-                  </select>
-                </div>
-                <div class="flex items-center h-full pt-2">
-                  <label class="flex items-center space-x-2">
+
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center">
                     <input
                       type="checkbox"
+                      :id="`required-${index}`"
                       v-model="field.required"
                       class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
                       @change="updateParameter"
                     />
-                    <span class="text-sm text-gray-700">Required</span>
-                  </label>
-                </div>
-                <div class="flex items-center h-full pt-2">
+                    <label :for="`required-${index}`" class="ml-2 text-sm text-gray-700">Required</label>
+                  </div>
                   <button
                     @click="removeField(index)"
                     class="text-red-600 hover:text-red-800 whitespace-nowrap"

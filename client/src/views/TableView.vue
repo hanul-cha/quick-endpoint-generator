@@ -591,11 +591,11 @@ const handleTableSave = async (updatedTable: Partial<DataTable>) => {
     if (updatedTable.id) {
       const result = await tableApi.updateTable(updatedTable.id, updatedTable)
       table.value = result
-      showToastMessage('테이블 구조가 업데이트되었습니다.')
+      showToastMessage('Table structure updated successfully.')
     }
   } catch (error) {
     console.error('Failed to update table structure:', error)
-    showToastMessage('테이블 구조 업데이트에 실패했습니다.')
+    showToastMessage('Failed to update table structure.')
   } finally {
     showTableModal.value = false
   }
