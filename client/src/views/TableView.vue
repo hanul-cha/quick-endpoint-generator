@@ -14,23 +14,31 @@
         </div>
         <div class="flex space-x-2">
           <button
-            @click="editTableStructure"
-            class="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
-          >
-            Edit
-          </button>
-          <button
             @click="refreshData"
             class="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
           >
             Refresh
+          </button>
+          <button
+            @click="goToSchemaManagement"
+            class="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+          >
+            Schema Management
           </button>
         </div>
       </div>
 
       <!-- Column information -->
       <div class="p-4 mb-6 bg-white border border-gray-200 rounded-lg">
-        <h2 class="mb-4 text-xl font-semibold">Table Structure</h2>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-semibold">Table Structure</h2>
+          <button
+            @click="editTableStructure"
+            class="px-4 py-2 text-indigo-600 border border-indigo-600 rounded-md hover:bg-indigo-50"
+          >
+            Edit
+          </button>
+        </div>
         <div class="overflow-x-auto border rounded-md">
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
@@ -64,7 +72,7 @@
           <h2 class="text-xl font-semibold">Data</h2>
           <button
             @click="initCreateRow()"
-            class="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700"
+            class="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
           >
             Add Data
           </button>
@@ -118,13 +126,13 @@
                     <div class="flex space-x-2">
                       <button
                         @click="editRow(row)"
-                        class="text-indigo-600 hover:text-indigo-900"
+                        class="px-4 py-1 text-indigo-600 border border-indigo-600 rounded-md hover:bg-indigo-50"
                       >
                         Edit
                       </button>
                       <button
                         @click="deleteRowConfirm(row.id)"
-                        class="text-red-600 hover:text-red-900"
+                        class="px-4 py-1 text-red-600 border border-red-600 rounded-md hover:bg-red-50"
                       >
                         Delete
                       </button>
@@ -287,7 +295,7 @@
           </button>
           <button
             @click="deleteRow"
-            class="px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700"
+            class="px-4 py-2 text-red-600 border border-red-600 rounded-md hover:bg-red-50"
           >
             Delete
           </button>
@@ -323,7 +331,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { tableApi } from '../api/table'
 import { rowApi } from '../api/row'
 import type { DataTable } from '../types/data-table'
@@ -333,6 +341,7 @@ import TableEditModal from '@/components/TableEditModal.vue'
 
 // Get route and table ID
 const route = useRoute()
+const router = useRouter()
 const tableId = ref(route.params.tableId as string)
 
 // State management
@@ -816,6 +825,11 @@ const isValidJson = (value: any): boolean => {
 const hideTooltip = () => {
   tooltipVisible.value = false;
 };
+
+// Navigate to schema management
+const goToSchemaManagement = () => {
+  router.push('/data/schema')
+}
 </script>
 
 <style scoped>

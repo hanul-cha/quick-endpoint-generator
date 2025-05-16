@@ -574,19 +574,19 @@ const validateForm = () => {
   let isValid = true
 
   if (!editingEndpoint.value.name?.trim()) {
-    errors.value.name = '엔드포인트 이름은 필수입니다.'
+    errors.value.name = 'Endpoint name is required.'
     isValid = false
   }
 
   if (!editingEndpoint.value.method) {
-    errors.value.method = 'HTTP 메소드는 필수입니다.'
+    errors.value.method = 'HTTP method is required.'
     isValid = false
   }
 
   // 파라미터 필드 유효성 검사
   for (const field of parameterFields.value) {
     if (!field.key.trim()) {
-      errors.value.parameter = '모든 파라미터는 키 값이 있어야 합니다.'
+      errors.value.parameter = 'All parameters must have a key value.'
       isValid = false
       break
     }
@@ -620,7 +620,7 @@ const saveEndpoint = async () => {
     closeModal()
   } catch (error) {
     console.error(`Failed to ${isEditing.value ? 'update' : 'create'} endpoint:`, error)
-    alert(`엔드포인트 ${isEditing.value ? '수정' : '생성'} 중 오류가 발생했습니다.`)
+    alert(`Endpoint ${isEditing.value ? 'update' : 'create'} failed.`)
   }
 }
 

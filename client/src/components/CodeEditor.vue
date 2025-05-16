@@ -51,7 +51,10 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 
 const modelValueProxy = computed({
-  get: () => props.modelValue,
+  get: () => props.modelValue || `function main(params, repo) {
+
+}
+  `,
   set: v => emit('update:modelValue', v)
 })
 
