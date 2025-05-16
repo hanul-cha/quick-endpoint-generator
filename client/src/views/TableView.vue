@@ -190,7 +190,12 @@
               v-if="column.type === 'string'"
               v-model="editingRow.values[column.id]"
               type="text"
-              class="block w-full px-3 py-2 border border-gray-300 rounded-md focus:border-indigo-500 focus:outline-none"
+              :class="[
+                'block w-full px-3 py-2 border rounded-md focus:outline-none',
+                formErrors[column.id]
+                  ? 'border-red-500 focus:border-red-500'
+                  : 'border-gray-300 focus:border-indigo-500'
+              ]"
             />
 
             <!-- Number input field -->
@@ -198,7 +203,12 @@
               v-else-if="column.type === 'number'"
               v-model.number="editingRow.values[column.id]"
               type="number"
-              class="block w-full px-3 py-2 border border-gray-300 rounded-md focus:border-indigo-500 focus:outline-none"
+              :class="[
+                'block w-full px-3 py-2 border rounded-md focus:outline-none',
+                formErrors[column.id]
+                  ? 'border-red-500 focus:border-red-500'
+                  : 'border-gray-300 focus:border-indigo-500'
+              ]"
             />
 
             <!-- Boolean input field -->
@@ -217,15 +227,28 @@
               v-else-if="column.type === 'date'"
               v-model="editingRow.values[column.id]"
               type="date"
-              class="block w-full px-3 py-2 border border-gray-300 rounded-md focus:border-indigo-500 focus:outline-none"
+              :class="[
+                'block w-full px-3 py-2 border rounded-md focus:outline-none',
+                formErrors[column.id]
+                  ? 'border-red-500 focus:border-red-500'
+                  : 'border-gray-300 focus:border-indigo-500'
+              ]"
             />
 
             <!-- JSON input field -->
             <JsonEditor
               v-else-if="column.type === 'json'"
               v-model="editingRow.values[column.id]"
-              class="mt-1"
+              :class="[
+                'mt-1',
+                formErrors[column.id] ? 'border-red-500' : ''
+              ]"
             />
+
+            <!-- Error message -->
+            <p v-if="formErrors[column.id]" class="mt-1 text-sm text-red-600">
+              {{ formErrors[column.id] }}
+            </p>
           </div>
         </div>
 
@@ -358,6 +381,9 @@ const editingTable = ref<Partial<DataTable>>({
   columns: []
 })
 
+// 현재 편집 중인 행의 유효성 검사 오류
+const formErrors = ref<Record<string, string>>({})
+
 // Load table data
 const loadTable = async () => {
   try {
@@ -392,12 +418,6 @@ const loadData = async () => {
 const refreshData = () => {
   loadData()
   showToastMessage('Data refreshed successfully.')
-}
-
-// Close modal
-const closeModal = () => {
-  showRowModal.value = false
-  editingRow.value = { values: {} }
 }
 
 // Edit row
@@ -462,6 +482,11 @@ const initCreateRow = () => {
 
 // Save row (create or update)
 const saveRow = async () => {
+  // 유효성 검사 수행
+  if (!validateRowData()) {
+    return;
+  }
+
   try {
     // JSON 문자열 값을 객체로 변환
     const values = { ...editingRow.value.values };
@@ -499,6 +524,53 @@ const saveRow = async () => {
     console.error('Failed to save data:', error)
     showToastMessage('Failed to save data.')
   }
+}
+
+// 행 데이터의 유효성 검사
+const validateRowData = () => {
+  // 오류 초기화
+  formErrors.value = {};
+  let isValid = true;
+
+  if (!table.value) return false;
+
+  // 각 컬럼별 유효성 검사
+  table.value.columns.forEach(column => {
+    const value = editingRow.value.values[column.id];
+
+    // 필수값 검사
+    if (column.required && isEmpty(value)) {
+      formErrors.value[column.id] = `${column.name} is required`;
+      isValid = false;
+      return;
+    }
+
+    // 비어있지 않은 경우 타입 검사
+    if (!isEmpty(value) && !isCorrectType(column, value)) {
+      formErrors.value[column.id] = `Invalid type. Expected ${column.type}`;
+      isValid = false;
+      return;
+    }
+
+    // JSON 형식 검사
+    if (column.type === 'json' && !isEmpty(value)) {
+      try {
+        JSON.parse(value);
+      } catch (e) {
+        formErrors.value[column.id] = 'Invalid JSON format';
+        isValid = false;
+      }
+    }
+  });
+
+  return isValid;
+}
+
+// Close modal
+const closeModal = () => {
+  showRowModal.value = false;
+  editingRow.value = { values: {} };
+  formErrors.value = {}; // 폼 오류 초기화
 }
 
 // Confirm row deletion
