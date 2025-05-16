@@ -97,7 +97,15 @@
               <tbody class="bg-white divide-y divide-gray-200">
                 <tr v-for="(row, index) in rows.items" :key="row.id">
                   <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">{{ index + 1 + (rows.page - 1) * rows.limit }}</td>
-                  <td v-for="column in table?.columns" :key="column.id" class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
+                  <td v-for="column in table?.columns" :key="column.id"
+                    :class="[
+                      'px-6 py-4 text-sm whitespace-nowrap relative',
+                      shouldHighlightValue(column, row.values[column.id])
+                        ? 'bg-red-50 text-red-900 font-medium cursor-help'
+                        : 'text-gray-900'
+                    ]"
+                    @mouseenter="showTooltip($event, column, row.values[column.id])"
+                    @mouseleave="hideTooltip()">
                     {{ formatValue(row.values[column.id], column.type) }}
                   </td>
                   <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
@@ -270,6 +278,14 @@
         {{ toastMessage }}
       </div>
     </transition>
+
+    <!-- Custom tooltip -->
+    <div
+      v-if="tooltipVisible"
+      class="absolute z-50 max-w-xs p-2 text-sm text-white bg-gray-800 rounded shadow-lg"
+      :style="tooltipStyle">
+      {{ tooltipContent }}
+    </div>
 
     <!-- Table Edit Modal -->
     <TableEditModal
@@ -600,6 +616,134 @@ const handleTableSave = async (updatedTable: Partial<DataTable>) => {
     showTableModal.value = false
   }
 }
+
+// 현재 값의 실제 타입을 반환하는 함수
+const getActualType = (value: any): string => {
+  if (value === null) return 'null';
+  if (value === undefined) return 'undefined';
+
+  const type = typeof value;
+
+  if (type === 'object') {
+    if (Array.isArray(value)) return 'array';
+    if (value instanceof Date) return 'date';
+    return 'object';
+  }
+
+  return type;
+}
+
+// 툴팁 관련 상태
+const tooltipVisible = ref(false);
+const tooltipContent = ref('');
+const tooltipStyle = ref({
+  top: '0px',
+  left: '0px'
+});
+
+// 툴팁 표시
+const showTooltip = (event: MouseEvent, column: any, value: any) => {
+  // 하이라이트 조건에 맞지 않으면 툴팁 표시하지 않음
+  if (!shouldHighlightValue(column, value)) return;
+
+  let message = '';
+
+  // 필수값 누락 메시지
+  if (column.required && isEmpty(value)) {
+    message = `Required Field: This field cannot be empty`;
+  }
+  // 타입 불일치 메시지
+  else if (!isCorrectType(column, value)) {
+    message = `Type Mismatch: Expected '${column.type}', but got '${getActualType(value)}'`;
+  }
+
+  tooltipContent.value = message;
+
+  // 마우스 위치 기준으로 툴팁 위치 조정
+  const target = event.target as HTMLElement;
+  const rect = target.getBoundingClientRect();
+
+  tooltipStyle.value = {
+    top: `${rect.bottom + window.scrollY + 10}px`, // 요소 아래 10px
+    left: `${rect.left + window.scrollX}px`
+  };
+
+  tooltipVisible.value = true;
+};
+
+// 행의 특정 컬럼 값이 타입이 변경되었는지 또는 필수값이 누락되었는지 확인하는 함수
+const shouldHighlightValue = (column: any, value: any): boolean => {
+  // 필수값인데 비어있는 경우
+  if (column.required && isEmpty(value)) {
+    return true;
+  }
+
+  // 비어있지 않고 타입이 맞지 않는 경우
+  if (!isEmpty(value) && !isCorrectType(column, value)) {
+    return true;
+  }
+
+  return false;
+}
+
+// 값이 비어있는지 확인 (null, undefined, 빈 문자열)
+const isEmpty = (value: any): boolean => {
+  return value === null || value === undefined || value === '';
+}
+
+// 값의 타입이 컬럼 타입과 일치하는지 확인
+const isCorrectType = (column: any, value: any): boolean => {
+  if (isEmpty(value)) return true; // 비어있는 경우는 타입 체크 불필요
+
+  const valueType = typeof value;
+
+  // 문자열 타입 체크
+  if (column.type === 'string' && valueType !== 'string') return false;
+
+  // 숫자 타입 체크
+  if (column.type === 'number' && valueType !== 'number') return false;
+
+  // 불리언 타입 체크
+  if (column.type === 'boolean' && valueType !== 'boolean') return false;
+
+  // 날짜 타입 체크 (문자열이지만 날짜 형식인지 확인)
+  if (column.type === 'date' && !isValidDate(value)) return false;
+
+  // JSON 타입 체크 (객체이거나 JSON 문자열인지 확인)
+  if (column.type === 'json' && !isValidJson(value)) return false;
+
+  return true;
+}
+
+// 유효한 날짜인지 체크
+const isValidDate = (value: any): boolean => {
+  if (typeof value === 'string') {
+    const date = new Date(value);
+    return !isNaN(date.getTime());
+  }
+  return value instanceof Date;
+}
+
+// 유효한 JSON인지 체크
+const isValidJson = (value: any): boolean => {
+  if (typeof value === 'object') return true;
+
+  if (typeof value === 'string') {
+    try {
+      JSON.parse(value);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  return false;
+}
+
+// 툴팁 숨기기
+const hideTooltip = () => {
+  tooltipVisible.value = false;
+};
 </script>
 
 <style scoped>
