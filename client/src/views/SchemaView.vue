@@ -29,13 +29,20 @@
       </div>
 
       <div v-else class="space-y-6">
-        <div v-for="table in tables.items" :key="table.id" class="p-4 border rounded-lg">
-          <div class="flex items-center justify-between mb-4">
+        <div
+          v-for="table in tables.items"
+          :key="table.id"
+          class="p-4 border rounded-lg cursor-pointer hover:bg-gray-50"
+          @click="navigateToTable(table.id)"
+        >
+          <div class="flex items-center justify-between">
             <div class="flex items-center space-x-2">
-              <h3 class="text-lg font-medium">{{ table.name }}</h3>
+              <h3 class="text-lg font-medium">
+                {{ table.name }}
+              </h3>
               <span class="text-xs text-gray-400">({{ table.id }})</span>
               <button
-                @click="copyId(table.id)"
+                @click.stop="copyId(table.id)"
                 class="ml-1 text-xs text-gray-500 hover:text-indigo-600 focus:outline-none"
                 title="ID 복사"
               >
@@ -47,35 +54,18 @@
             </div>
             <div class="space-x-2">
               <button
-                @click="editTable(table)"
+                @click.stop="editTable(table)"
                 class="px-3 py-1 text-indigo-600 transition border border-indigo-600 rounded-md hover:bg-indigo-50"
               >
                 Edit
               </button>
               <button
-                @click="deleteTable(table.id)"
+                @click.stop="deleteTable(table.id)"
                 class="px-3 py-1 text-red-600 transition border border-red-600 rounded-md hover:bg-red-50"
               >
                 Delete
               </button>
             </div>
-          </div>
-
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Name</th>
-                  <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Type</th>
-                </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-                <tr v-for="column in table.columns" :key="column.id">
-                  <td class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">{{ column.name }}</td>
-                  <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">{{ column.type }}</td>
-                </tr>
-              </tbody>
-            </table>
           </div>
         </div>
 
@@ -234,6 +224,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import type { DataTable } from '../types/data-table'
 import { tableApi } from '../api/table'
 import ConfirmModal from '@/components/ConfirmModal.vue'
+import { useRouter } from 'vue-router'
 
 interface PaginatedResponse<T> {
   items: T[]
@@ -262,6 +253,7 @@ const editingTable = ref<Partial<DataTable>>({
   name: '',
   columns: []
 })
+const router = useRouter()
 
 const errors = ref({
   tableName: '',
@@ -404,6 +396,10 @@ const copyId = async (id: string) => {
   } catch (e) {
     alert('Failed to copy to clipboard.')
   }
+}
+
+const navigateToTable = (tableId: string) => {
+  router.push(`/table/${tableId}`)
 }
 
 // 컴포넌트 마운트 시 테이블 목록 로드

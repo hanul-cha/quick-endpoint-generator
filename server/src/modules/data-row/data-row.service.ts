@@ -121,8 +121,14 @@ export class DataRowService {
       throw new Error('DataRow not found')
     }
 
+    const dataTable = await this.dataTableService.findOne(dataRow.dataTableId)
+
+    if (!dataTable) {
+      throw new Error('DataTable not found')
+    }
+
     // 데이터 테이블의 컬럼 ID가 모두 존재하는지 확인
-    await this.validateColumnIds(dataRow.dataTable, values)
+    await this.validateColumnIds(dataTable, values)
 
     await this.dataRowRepository.update(id, { values })
     return await this.findOne(id)

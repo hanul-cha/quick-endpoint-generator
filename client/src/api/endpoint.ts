@@ -1,24 +1,10 @@
+import { PaginatedResponse, PaginationOptions } from './pagination'
+
 import type { Endpoint } from '@/types/endpoint'
 import { api } from './client'
 
-interface PaginatedResponse<T> {
-  items: T[]
-  total: number
-  page: number
-  limit: number
-  totalPages: number
-  hasNextPage: boolean
-  hasPreviousPage: boolean
-  offset: number
-}
-
-interface EndpointListParams {
-  page?: number
-  limit?: number
-}
-
 export const endpointApi = {
-  async getMyEndpoints(params: EndpointListParams = {}): Promise<PaginatedResponse<Endpoint>> {
+  async getMyEndpoints(params: PaginationOptions = {}): Promise<PaginatedResponse<Endpoint>> {
     const searchParams = new URLSearchParams()
     if (params.page) searchParams.append('page', params.page.toString())
     if (params.limit) searchParams.append('limit', params.limit.toString())

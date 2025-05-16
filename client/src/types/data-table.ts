@@ -1,5 +1,7 @@
+export type ColumnId = string
+
 export interface DataColumn {
-  id: string
+  id: ColumnId
   name: string
   type: string
   required?: boolean

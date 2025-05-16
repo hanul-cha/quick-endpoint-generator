@@ -6,6 +6,7 @@ import LoginView from '../views/LoginView.vue'
 import LogoutView from '../views/LogoutView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import SchemaView from '../views/SchemaView.vue'
+import TableView from '@/views/TableView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -34,6 +35,12 @@ const router = createRouter({
       path: '/logout',
       name: 'logout',
       component: LogoutView
+    },
+    {
+      path: '/table/:tableId',
+      name: 'table',
+      component: TableView,
+      meta: { requiresAuth: true }
     },
     {
       path: '/data',

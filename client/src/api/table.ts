@@ -1,21 +1,7 @@
+import { PaginatedResponse, PaginationOptions } from './pagination'
+
 import type { DataTable } from '../types/data-table'
 import { api } from './client'
-
-interface PaginationOptions {
-  page?: number
-  limit?: number
-}
-
-interface PaginatedResponse<T> {
-  items: T[]
-  total: number
-  page: number
-  limit: number
-  totalPages: number
-  hasNextPage: boolean
-  hasPreviousPage: boolean
-  offset: number
-}
 
 export const tableApi = {
   getTables: (options?: PaginationOptions) => {
