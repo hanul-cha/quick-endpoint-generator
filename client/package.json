@@ -17,12 +17,14 @@
     "@codemirror/theme-one-dark": "^6.1.2",
     "@codemirror/view": "^6.36.8",
     "axios": "^1.8.4",
+    "jsoneditor": "^10.2.0",
     "socket.io-client": "^4.8.1",
     "vue": "^3.5.13",
     "vue-codemirror": "^6.1.1",
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
+    "@types/jsoneditor": "^9.9.5",
     "@types/node": "^22.14.1",
     "@vitejs/plugin-vue": "^5.2.3",
     "autoprefixer": "^10.4.21",

@@ -12,12 +12,20 @@
           <h1 class="text-3xl font-bold">{{ table?.name }}</h1>
           <p class="text-sm text-gray-500">ID: {{ tableId }}</p>
         </div>
-        <button
-          @click="refreshData"
-          class="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
-        >
-          Refresh
-        </button>
+        <div class="flex space-x-2">
+          <button
+            @click="editTableStructure"
+            class="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+          >
+            Edit
+          </button>
+          <button
+            @click="refreshData"
+            class="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+          >
+            Refresh
+          </button>
+        </div>
       </div>
 
       <!-- Column information -->
@@ -145,13 +153,13 @@
 
     <!-- Create/Edit Row Modal -->
     <div
-      v-if="showEditModal || showCreateModal"
+      v-if="showRowModal"
       class="fixed inset-0 z-10 flex items-center justify-center bg-black bg-opacity-50"
       @click.self="closeModal"
     >
       <div class="w-full max-w-2xl p-6 bg-white border border-gray-200 rounded-lg">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-xl font-semibold">{{ showEditModal ? 'Edit Data' : 'Add Data' }}</h2>
+          <h2 class="text-xl font-semibold">{{ isEditMode ? 'Edit Data' : 'Add Data' }}</h2>
           <button
             @click="closeModal"
             class="text-gray-500 hover:text-gray-700"
@@ -205,12 +213,11 @@
             />
 
             <!-- JSON input field -->
-            <textarea
+            <JsonEditor
               v-else-if="column.type === 'json'"
               v-model="editingRow.values[column.id]"
-              rows="4"
-              class="block w-full px-3 py-2 border border-gray-300 rounded-md focus:border-indigo-500 focus:outline-none"
-            ></textarea>
+              class="mt-1"
+            />
           </div>
         </div>
 
@@ -225,7 +232,7 @@
             @click="saveRow"
             class="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
           >
-            {{ showEditModal ? 'Save Changes' : 'Add Data' }}
+            {{ isEditMode ? 'Save Changes' : 'Add Data' }}
           </button>
         </div>
       </div>
@@ -263,16 +270,27 @@
         {{ toastMessage }}
       </div>
     </transition>
+
+    <!-- Table Edit Modal -->
+    <TableEditModal
+      v-if="showTableModal"
+      v-model="showTableModal"
+      :table="editingTable"
+      :is-editing="true"
+      @save="handleTableSave"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { tableApi } from '../api/table'
 import { rowApi } from '../api/row'
 import type { DataTable } from '../types/data-table'
 import type { DataRow } from '@/types/data-row'
+import JsonEditor from '@/components/JsonEditor.vue'
+import TableEditModal from '@/components/TableEditModal.vue'
 
 // Get route and table ID
 const route = useRoute()
@@ -302,8 +320,8 @@ const rows = ref<{
 })
 
 // Modal states
-const showEditModal = ref(false)
-const showCreateModal = ref(false)
+const showRowModal = ref(false)
+const isEditMode = ref(false)
 const showDeleteModal = ref(false)
 const deletingRowId = ref<string | null>(null)
 const showToast = ref(false)
@@ -315,6 +333,13 @@ const editingRow = ref<{
   values: Record<string, any>;
 }>({
   values: {}
+})
+
+// Table edit modal
+const showTableModal = ref(false)
+const editingTable = ref<Partial<DataTable>>({
+  name: '',
+  columns: []
 })
 
 // Load table data
@@ -355,18 +380,33 @@ const refreshData = () => {
 
 // Close modal
 const closeModal = () => {
-  showEditModal.value = false
-  showCreateModal.value = false
+  showRowModal.value = false
   editingRow.value = { values: {} }
 }
 
 // Edit row
 const editRow = (row: DataRow) => {
+  // JSON 값 처리를 위한 복사본 생성
+  const valuesCopy = { ...row.values };
+
+  // JSON 타입 값을 문자열로 변환
+  if (table.value) {
+    table.value.columns.forEach(column => {
+      if (column.type === 'json' && valuesCopy[column.id] !== null && valuesCopy[column.id] !== undefined) {
+        // 이미 문자열이 아니라면 JSON.stringify 처리
+        if (typeof valuesCopy[column.id] !== 'string') {
+          valuesCopy[column.id] = JSON.stringify(valuesCopy[column.id], null, 2);
+        }
+      }
+    });
+  }
+
   editingRow.value = {
     id: row.id,
-    values: { ...row.values }
+    values: valuesCopy
   }
-  showEditModal.value = true
+  isEditMode.value = true
+  showRowModal.value = true
 }
 
 // Initialize create row modal
@@ -400,21 +440,39 @@ const initCreateRow = () => {
   }
 
   editingRow.value = { values }
-  showCreateModal.value = true
+  isEditMode.value = false
+  showRowModal.value = true
 }
 
 // Save row (create or update)
 const saveRow = async () => {
   try {
-    if (showEditModal.value && editingRow.value.id) {
+    // JSON 문자열 값을 객체로 변환
+    const values = { ...editingRow.value.values };
+
+    if (table.value) {
+      table.value.columns.forEach(column => {
+        if (column.type === 'json' && values[column.id]) {
+          try {
+            // 문자열을 JSON 객체로 파싱
+            values[column.id] = JSON.parse(values[column.id]);
+          } catch (e) {
+            console.error(`Failed to parse JSON for ${column.name}:`, e);
+            // 파싱 실패 시 원래 문자열 유지
+          }
+        }
+      });
+    }
+
+    if (isEditMode.value && editingRow.value.id) {
       // Update row
       await rowApi.updateRow(editingRow.value.id, {
-        values: editingRow.value.values
+        values: values
       })
       showToastMessage('Data updated successfully.')
     } else {
       // Create new row
-      await rowApi.createRow(tableId.value, editingRow.value.values)
+      await rowApi.createRow(tableId.value, values)
       showToastMessage('New data added successfully.')
     }
 
@@ -472,6 +530,7 @@ const formatValue = (value: any, type: string) => {
       return new Date(value).toLocaleDateString('en-US')
     case 'json':
       try {
+        // 이미 문자열인 경우 한번 파싱했다가 다시 문자열화
         return typeof value === 'string'
           ? JSON.stringify(JSON.parse(value), null, 2)
           : JSON.stringify(value, null, 2)
@@ -494,10 +553,53 @@ watch(() => route.params.tableId, (newId) => {
   loadData()
 })
 
-// Load data when component mounts
+// 키보드 이벤트 핸들러 추가
+const handleEscKey = (event: KeyboardEvent) => {
+  if (event.key === 'Escape') {
+    if (showRowModal.value) {
+      closeModal()
+    } else if (showDeleteModal.value) {
+      showDeleteModal.value = false
+    } else if (showTableModal.value) {
+      showTableModal.value = false
+    }
+  }
+}
+
+// 마운트 시 이벤트 리스너 추가
 onMounted(() => {
+  document.addEventListener('keydown', handleEscKey)
   loadData()
 })
+
+// 언마운트 시 이벤트 리스너 제거
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleEscKey)
+})
+
+// Edit table structure
+const editTableStructure = () => {
+  if (table.value) {
+    editingTable.value = { ...table.value }
+    showTableModal.value = true
+  }
+}
+
+// Handle table structure save
+const handleTableSave = async (updatedTable: Partial<DataTable>) => {
+  try {
+    if (updatedTable.id) {
+      const result = await tableApi.updateTable(updatedTable.id, updatedTable)
+      table.value = result
+      showToastMessage('테이블 구조가 업데이트되었습니다.')
+    }
+  } catch (error) {
+    console.error('Failed to update table structure:', error)
+    showToastMessage('테이블 구조 업데이트에 실패했습니다.')
+  } finally {
+    showTableModal.value = false
+  }
+}
 </script>
 
 <style scoped>
