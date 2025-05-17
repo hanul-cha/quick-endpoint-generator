@@ -164,8 +164,10 @@ const addColumn = () => {
   if (!localTable.value.columns) {
     localTable.value.columns = []
   }
+  const columnLength = localTable.value.columns.length
+
   localTable.value.columns.push({
-    id: crypto.randomUUID(),
+    id: `${columnLength + 1}`,
     name: '',
     type: 'string',
     required: false

@@ -246,18 +246,18 @@ export class DataRowService {
     dataTable: DataTable,
     values?: Record<string, any>,
   ) {
-    // 데이터 테이블의 모든 컬럼 ID 추출
-    const columnIds = dataTable.columns?.map((col) => col.id) || []
     // values에 제공된 모든 컬럼 ID 추출
     const valueColumnIds = Object.keys(values || {})
 
     // 1. 유효하지 않은 컬럼 ID 확인 (values에는 있지만 테이블에는 없는 컬럼)
-    const invalidColumnIds = valueColumnIds.filter(
-      (id) => !columnIds.includes(id),
-    )
-    if (invalidColumnIds.length > 0) {
-      throw new Error(`Invalid column IDs: ${invalidColumnIds.join(', ')}`)
-    }
+    // const columnIds = dataTable.columns?.map((col) => col.id) || []
+
+    // const invalidColumnIds = valueColumnIds.filter(
+    //   (id) => !columnIds.includes(id),
+    // )
+    // if (invalidColumnIds.length > 0) {
+    //   throw new Error(`Invalid column IDs: ${invalidColumnIds.join(', ')}`)
+    // }
 
     // 2. 필수(required) 컬럼이 모두 존재하는지 확인
     const requiredColumns =
