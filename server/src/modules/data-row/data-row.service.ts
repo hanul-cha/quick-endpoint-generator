@@ -209,22 +209,26 @@ export class DataRowService {
       )
       const table = dataTables.get(tableId)
       if (table) {
-        values.forEach((properties) => {
+        values.forEach(({ id, ...properties }) => {
           try {
             this.validateColumnIds(table, properties)
-            validatedValues.push(properties)
+            validatedValues.push({
+              id,
+              ...properties,
+            })
           } catch (error) {
-            //
+            console.error(error)
           }
         })
       }
     })
 
-    const rowsToUpdate = validatedValues.map((row) => ({
-      ...row,
-      values: rowValues.find((rowValue) => rowValue.id === row.id)?.values,
+    const rowsToUpdate = validatedValues.map(({ id, ...properties }) => ({
+      id,
+      values: properties,
     }))
 
+    // values만 벌크 업데이트
     return await this.dataRowRepository.save(rowsToUpdate)
   }
 
