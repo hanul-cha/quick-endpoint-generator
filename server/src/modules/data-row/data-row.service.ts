@@ -147,13 +147,29 @@ export class DataRowService {
     const dataTableIds =
       await this.dataTableService.findTableIdsByUserId(userId)
 
-    return await this.dataRowRepository.update(
-      {
+    // 업데이트할 행 먼저 찾기
+    const rows = await this.dataRowRepository.find({
+      where: {
         dataTableId: In(dataTableIds),
         ...where,
       },
-      { values },
-    )
+    })
+
+    // 각 행에 대해 기존 values와 새 values를 병합
+    const updates = rows.map((row) => {
+      const updatedValues = { ...(row.values || {}), ...values }
+      return {
+        ...row,
+        values: updatedValues,
+      }
+    })
+
+    // 병합된 값으로 업데이트
+    if (updates.length > 0) {
+      return await this.dataRowRepository.save(updates)
+    }
+
+    return { affected: 0 }
   }
 
   async updateByEntities(
@@ -163,7 +179,7 @@ export class DataRowService {
     const rowValues = _rowValues.map((value) => deleteEmptyStringObject(value))
 
     const selectedTableIds = new Set<string>()
-    let rowAndTableMap = new Map<string, string[]>()
+    let rowAndTableMap = new Map<string, DataRow[]>()
 
     await this.dataRowRepository
       .find({
@@ -175,10 +191,10 @@ export class DataRowService {
         rows.forEach((row) => {
           selectedTableIds.add(row.dataTableId)
           const tableId = row.dataTableId
-          const rowIds = rowAndTableMap.get(tableId) || []
+          const rows = rowAndTableMap.get(tableId) || []
 
-          rowIds.push(row.id)
-          rowAndTableMap.set(tableId, rowIds)
+          rows.push(row)
+          rowAndTableMap.set(tableId, rows)
         })
       })
 
@@ -191,22 +207,31 @@ export class DataRowService {
       })
       .then((tables) => {
         // rowAndTableMap을 tables로 필터링해야한다
-        const filteredRowAndTableMap = new Map<string, string[]>()
+        const filteredRowAndTableMap = new Map<string, DataRow[]>()
         tables.forEach((table) => {
           dataTables.set(table.id, table)
 
-          const rowIds = rowAndTableMap.get(table.id) || []
-          filteredRowAndTableMap.set(table.id, rowIds)
+          const rows = rowAndTableMap.get(table.id) || []
+          filteredRowAndTableMap.set(table.id, rows)
         })
         rowAndTableMap = filteredRowAndTableMap
       })
 
     const validatedValues: (Record<string, any> & { id: string })[] = []
 
-    rowAndTableMap.forEach((rowIds, tableId) => {
-      const values = rowValues.filter((rowValue) =>
-        rowIds.includes(rowValue.id),
-      )
+    rowAndTableMap.forEach((rows, tableId) => {
+      const values = rowValues
+        .map((rowValue) => {
+          const row = rows.find((row) => row.id === rowValue.id)
+          if (!row) return null
+          return {
+            ...row.values,
+            ...rowValue,
+            id: row.id,
+          }
+        })
+        .filter((value) => !!value)
+
       const table = dataTables.get(tableId)
       if (table) {
         values.forEach(({ id, ...properties }) => {

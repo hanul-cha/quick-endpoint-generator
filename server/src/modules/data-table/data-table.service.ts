@@ -15,22 +15,14 @@ export class DataTableService {
     private readonly dataTableRepository: Repository<DataTable>,
   ) {}
 
-  private validateColumnIds(columns: DataColumn[]) {
-    const columnIds = columns.map((column) => column.id)
-    const uniqueColumnIds = new Set(columnIds)
-    if (columnIds.length !== uniqueColumnIds.size) {
-      throw new Error('Column IDs must be unique')
-    }
-
-    columnIds.forEach((id) => {
-      if (isNaN(Number(id))) {
-        throw new Error('Column IDs must be numbers')
-      }
+  private setColumnIds(columns: DataColumn[]) {
+    columns.forEach((column, index) => {
+      column.id = `${index + 1}`
     })
   }
 
   async create(name: string, columns?: DataColumn[], userId?: number) {
-    this.validateColumnIds(columns)
+    this.setColumnIds(columns)
 
     const dataTable = this.dataTableRepository.create({
       name,
@@ -69,7 +61,7 @@ export class DataTableService {
     columns?: DataColumn[],
     userId?: number,
   ) {
-    this.validateColumnIds(columns)
+    this.setColumnIds(columns)
 
     const updateData: Partial<DataTable> = { name, columns }
     if (userId !== undefined) {

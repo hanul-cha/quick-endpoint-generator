@@ -7,6 +7,7 @@ import { DataTableService } from './modules/data-table/data-table.service'
 import { EndpointParameter } from './modules/endpoint/endpoint.entity'
 import { EndpointService } from './modules/endpoint/endpoint.service'
 import { GlobalPrimitive } from './app.types'
+import { Raw } from 'typeorm'
 import { createLimitedRepository } from './app.limited.repository'
 
 export interface EndpointRunOptions {
@@ -115,6 +116,7 @@ export class AppService {
       Boolean: Boolean,
       Object: Object,
       Array: Array,
+      Raw: Raw,
       // 추가 보안을 위해 setTimeout, setInterval 등은 제외
     })
   }
