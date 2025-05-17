@@ -10,7 +10,19 @@
       <div class="flex items-center justify-between mb-6">
         <div>
           <h1 class="text-3xl font-bold">{{ table?.name }}</h1>
-          <p class="text-sm text-gray-500">ID: {{ tableId }}</p>
+          <p class="text-sm text-gray-500">
+            ID: {{ tableId }}
+            <button
+              @click="copyId(tableId)"
+              class="ml-1 text-xs text-gray-500 hover:text-indigo-600 focus:outline-none align-middle"
+              title="ID 복사"
+            >
+              <svg class="inline w-4 h-4 align-middle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16h8a2 2 0 002-2V8a2 2 0 00-2-2H8a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2" />
+              </svg>
+            </button>
+          </p>
         </div>
         <div class="flex space-x-2">
           <button
@@ -829,6 +841,16 @@ const hideTooltip = () => {
 // Navigate to schema management
 const goToSchemaManagement = () => {
   router.push('/data/schema')
+}
+
+// Copy ID
+const copyId = async (id: string) => {
+  try {
+    await navigator.clipboard.writeText(id)
+    showToastMessage('ID가 클립보드에 복사되었습니다.')
+  } catch (e) {
+    showToastMessage('클립보드 복사에 실패했습니다.')
+  }
 }
 </script>
 

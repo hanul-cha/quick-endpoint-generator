@@ -1,5 +1,6 @@
 import * as vm from 'vm'
 
+import { And, Equal, In, Not, Or, Raw } from 'typeorm'
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
 
 import { DataRowService } from './modules/data-row/data-row.service'
@@ -7,7 +8,6 @@ import { DataTableService } from './modules/data-table/data-table.service'
 import { EndpointParameter } from './modules/endpoint/endpoint.entity'
 import { EndpointService } from './modules/endpoint/endpoint.service'
 import { GlobalPrimitive } from './app.types'
-import { Raw } from 'typeorm'
 import { createLimitedRepository } from './app.limited.repository'
 
 export interface EndpointRunOptions {
@@ -117,6 +117,11 @@ export class AppService {
       Object: Object,
       Array: Array,
       Raw: Raw,
+      In: In,
+      And: And,
+      Or: Or,
+      Not: Not,
+      Eq: Equal,
       // 추가 보안을 위해 setTimeout, setInterval 등은 제외
     })
   }

@@ -34,17 +34,6 @@
             <div class="flex flex-col space-y-2">
               <div class="flex items-center space-x-2">
                 <h3 class="text-lg font-medium">{{ endpoint.name }}</h3>
-                <span class="text-xs text-gray-400">({{ endpoint.id }})</span>
-                <button
-                  @click="copyId(endpoint.id)"
-                  class="ml-1 text-xs text-gray-500 hover:text-indigo-600 focus:outline-none"
-                  title="Copy ID"
-                >
-                  <svg class="inline w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16h8a2 2 0 002-2V8a2 2 0 00-2-2H8a2 2 0 00-2 2v6a2 2 0 002 2z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2" />
-                  </svg>
-                </button>
                 <span class="px-2 py-0.5 text-xs font-medium bg-gray-100 border rounded-full" :class="{
                   'text-green-700 border-green-300': endpoint.method === 'GET',
                   'text-blue-700 border-blue-300': endpoint.method === 'POST',
