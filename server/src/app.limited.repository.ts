@@ -1,6 +1,7 @@
 import { HttpException, HttpStatus } from '@nestjs/common'
 
 import { AppService } from './app.service'
+import { DataRow } from './modules/data-row/data-row.entity'
 import { DataTable } from './modules/data-table/data-table.entity'
 import { PaginationOptions } from './util/pagination'
 import { validate } from 'class-validator'
@@ -174,13 +175,16 @@ export function createLimitedRepository(
         if (!id) {
           throw new HttpException('id is required', HttpStatus.BAD_REQUEST)
         }
-        return appService.dataRowService.update(id, data)
+        return appService.dataRowService.updateById(id, data)
       },
-      delete: async (id?: string) => {
-        if (!id) {
-          throw new HttpException('id is required', HttpStatus.BAD_REQUEST)
-        }
-        return appService.dataRowService.remove(id)
+      updateByWhere: async (where?: object, value?: Record<string, any>) => {
+        return appService.dataRowService.updateByWhere(userId, where, value)
+      },
+      updateByEntities: async (rows: DataRow[]) => {
+        return appService.dataRowService.updateByEntities(userId, rows)
+      },
+      delete: async (where?: object) => {
+        return appService.dataRowService.remove(userId, where)
       },
     },
   }

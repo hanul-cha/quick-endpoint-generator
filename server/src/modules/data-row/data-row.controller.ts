@@ -64,11 +64,11 @@ export class DataRowController {
       values: Record<string, any>
     },
   ) {
-    return await this.dataRowService.update(id, body.values)
+    return await this.dataRowService.updateById(id, body.values)
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return await this.dataRowService.remove(id)
+  async remove(@Param('id') id: string, @CurrentUser() user: User) {
+    return await this.dataRowService.remove(user.id, { id })
   }
 }

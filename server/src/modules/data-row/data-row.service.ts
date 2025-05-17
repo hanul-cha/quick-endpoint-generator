@@ -10,23 +10,24 @@ import {
 } from 'src/util/pagination'
 import { DataTable } from '../data-table/data-table.entity'
 import { GlobalPrimitive } from 'src/app.types'
+import { deleteEmptyStringObject } from 'src/util/emptyObject'
 
 @Injectable()
 export class DataRowService {
   constructor(
     @InjectRepository(DataRow)
-    private dataRowRepository: Repository<DataRow>,
-    private dataTableService: DataTableService,
+    readonly dataRowRepository: Repository<DataRow>,
+    readonly dataTableService: DataTableService,
   ) {}
 
-  async create(dataTableId: string, values?: Record<string, any>) {
-    // 데이터 테이블이 존재하는지 확인
+  async create(dataTableId: string, _values?: Record<string, any>) {
+    const values = deleteEmptyStringObject(_values)
+
     const dataTable = await this.dataTableService.findOne(dataTableId)
     if (!dataTable) {
       throw new Error('DataTable not found')
     }
 
-    // 컬럼 ID가 모두 존재하는지 확인
     await this.validateColumnIds(dataTable, values)
 
     const dataRow = this.dataRowRepository.create({
@@ -116,7 +117,9 @@ export class DataRowService {
     return await this.dataRowRepository.findOne({ where: { id } })
   }
 
-  async update(id: string, values?: Record<string, any>) {
+  async updateById(id: string, _values?: Record<string, any>) {
+    const values = deleteEmptyStringObject(_values)
+
     const dataRow = await this.findOne(id)
     if (!dataRow) {
       throw new Error('DataRow not found')
@@ -128,15 +131,61 @@ export class DataRowService {
       throw new Error('DataTable not found')
     }
 
-    // 데이터 테이블의 컬럼 ID가 모두 존재하는지 확인
     await this.validateColumnIds(dataTable, values)
 
     await this.dataRowRepository.update(id, { values })
     return await this.findOne(id)
   }
 
-  async remove(id: string) {
-    return await this.dataRowRepository.delete(id)
+  async updateByWhere(
+    userId: number,
+    where?: object,
+    _values?: Record<string, any>,
+  ) {
+    const values = deleteEmptyStringObject(_values)
+
+    const dataTableIds =
+      await this.dataTableService.findTableIdsByUserId(userId)
+
+    return await this.dataRowRepository.update(
+      {
+        dataTableId: In(dataTableIds),
+        ...where,
+      },
+      { values },
+    )
+  }
+
+  async updateByEntities(
+    userId: number,
+    rowValues: (Record<string, any> & { id: string })[],
+  ) {
+    const dataTableIds =
+      await this.dataTableService.findTableIdsByUserId(userId)
+
+    const dataRows = await this.dataRowRepository.find({
+      where: {
+        dataTableId: In(dataTableIds),
+        id: In(rowValues.map((row) => row.id)),
+      },
+    })
+
+    const rowsToUpdate = dataRows.map((row) => ({
+      ...row,
+      values: rowValues.find((rowValue) => rowValue.id === row.id)?.values,
+    }))
+
+    return await this.dataRowRepository.save(rowsToUpdate)
+  }
+
+  async remove(userId: number, where?: object) {
+    const dataTableIds =
+      await this.dataTableService.findTableIdsByUserId(userId)
+
+    return await this.dataRowRepository.delete({
+      dataTableId: In(dataTableIds),
+      ...where,
+    })
   }
 
   private async validateColumnIds(

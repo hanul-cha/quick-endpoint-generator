@@ -134,7 +134,7 @@ function repoCompletions(context: CompletionContext) {
         { label: 'find', type: 'method', info: 'Find rows by conditions', apply: 'find(where, options)' },
         { label: 'create', type: 'method', info: 'Create a new row', apply: 'create({\n    dataTableId: "tableId",\n    values: {}\n  })', },
         { label: 'update', type: 'method', info: 'Update a row', apply: 'update(id, data)' },
-        { label: 'delete', type: 'method', info: 'Delete a row', apply: 'delete(id)' }
+        { label: 'delete', type: 'method', info: 'Delete a row', apply: 'delete(where)' }
       ]
     }
   }
