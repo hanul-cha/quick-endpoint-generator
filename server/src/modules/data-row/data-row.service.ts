@@ -28,7 +28,7 @@ export class DataRowService {
       throw new Error('DataTable not found')
     }
 
-    await this.validateColumnIds(dataTable, values)
+    this.validateColumnIds(dataTable, values)
 
     const dataRow = this.dataRowRepository.create({
       dataTableId,
@@ -131,7 +131,7 @@ export class DataRowService {
       throw new Error('DataTable not found')
     }
 
-    await this.validateColumnIds(dataTable, values)
+    this.validateColumnIds(dataTable, values)
 
     await this.dataRowRepository.update(id, { values })
     return await this.findOne(id)
@@ -158,19 +158,69 @@ export class DataRowService {
 
   async updateByEntities(
     userId: number,
-    rowValues: (Record<string, any> & { id: string })[],
+    _rowValues: (Record<string, any> & { id: string })[],
   ) {
-    const dataTableIds =
-      await this.dataTableService.findTableIdsByUserId(userId)
+    const rowValues = _rowValues.map((value) => deleteEmptyStringObject(value))
 
-    const dataRows = await this.dataRowRepository.find({
-      where: {
-        dataTableId: In(dataTableIds),
-        id: In(rowValues.map((row) => row.id)),
-      },
+    const selectedTableIds = new Set<string>()
+    let rowAndTableMap = new Map<string, string[]>()
+
+    await this.dataRowRepository
+      .find({
+        where: {
+          id: In(rowValues.map((row) => row.id)),
+        },
+      })
+      .then((rows) => {
+        rows.forEach((row) => {
+          selectedTableIds.add(row.dataTableId)
+          const tableId = row.dataTableId
+          const rowIds = rowAndTableMap.get(tableId) || []
+
+          rowIds.push(row.id)
+          rowAndTableMap.set(tableId, rowIds)
+        })
+      })
+
+    const dataTables = new Map<string, DataTable>()
+
+    await this.dataTableService
+      .findAll({
+        id: In([...selectedTableIds]),
+        userId,
+      })
+      .then((tables) => {
+        // rowAndTableMap을 tables로 필터링해야한다
+        const filteredRowAndTableMap = new Map<string, string[]>()
+        tables.forEach((table) => {
+          dataTables.set(table.id, table)
+
+          const rowIds = rowAndTableMap.get(table.id) || []
+          filteredRowAndTableMap.set(table.id, rowIds)
+        })
+        rowAndTableMap = filteredRowAndTableMap
+      })
+
+    const validatedValues: (Record<string, any> & { id: string })[] = []
+
+    rowAndTableMap.forEach((rowIds, tableId) => {
+      const values = rowValues.filter((rowValue) =>
+        rowIds.includes(rowValue.id),
+      )
+      const table = dataTables.get(tableId)
+      if (table) {
+        values.forEach((properties) => {
+          try {
+            this.validateColumnIds(table, properties)
+            validatedValues.push(properties)
+          } catch (error) {
+            //
+          }
+        })
+      }
     })
 
-    const rowsToUpdate = dataRows.map((row) => ({
+    const rowsToUpdate = validatedValues.map((row) => ({
       ...row,
       values: rowValues.find((rowValue) => rowValue.id === row.id)?.values,
     }))
@@ -188,7 +238,7 @@ export class DataRowService {
     })
   }
 
-  private async validateColumnIds(
+  private validateColumnIds(
     dataTable: DataTable,
     values?: Record<string, any>,
   ) {
