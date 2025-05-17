@@ -177,23 +177,23 @@
 
           <div>
             <label class="block text-sm font-medium text-gray-700">Parameter</label>
-            <div class="pr-2 mt-4 space-y-4 overflow-y-auto max-h-72">
+            <div class="mt-4 space-y-4 overflow-y-auto max-h-72">
               <div v-for="(field, index) in parameterFields" :key="index" class="space-y-2">
                 <div class="flex">
-                  <div class="w-1/2 pr-2">
+                  <div class="w-1/2 pr-2 pl-0.5">
                     <label class="block text-sm font-medium text-gray-700">Key</label>
                     <input
                       v-model="field.key"
                       type="text"
-                      class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:border-indigo-500 focus:outline-none"
+                      class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 focus:border-transparent focus:outline-none"
                       @input="updateParameter"
                     />
                   </div>
-                  <div class="w-1/2 pl-2">
+                  <div class="w-1/2 pl-2 pr-0.5">
                     <label class="block text-sm font-medium text-gray-700">Type</label>
                     <select
                       v-model="field.type"
-                      class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:border-indigo-500 focus:outline-none"
+                      class="block w-full px-4 py-2 mt-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 focus:border-transparent focus:outline-none"
                       @change="updateParameter"
                     >
                       <option value="String">String</option>
@@ -843,7 +843,7 @@ loadEndpoints()
 }
 
 input:focus, select:focus, textarea:focus {
-  @apply ring-2 ring-opacity-50;
+  @apply ring-2 ring-indigo-500 ring-opacity-50 border-transparent;
 }
 
 input.border-red-500:focus, select.border-red-500:focus, textarea.border-red-500:focus {
