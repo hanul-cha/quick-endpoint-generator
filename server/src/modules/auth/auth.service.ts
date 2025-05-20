@@ -4,6 +4,10 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { User } from '../users/entities/user.entity'
 import * as bcrypt from 'bcrypt'
+import { EndpointService } from '../endpoint/endpoint.service'
+import { DataTableService } from '../data-table/data-table.service'
+import { createDefaultData } from './auth.help'
+import { DataRowService } from '../data-row/data-row.service'
 
 @Injectable()
 export class AuthService {
@@ -11,6 +15,9 @@ export class AuthService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private jwtService: JwtService,
+    readonly endpointService: EndpointService,
+    readonly dataTableService: DataTableService,
+    readonly dataRowService: DataRowService,
   ) {}
 
   async signUp(email: string, password: string, name: string) {
@@ -31,6 +38,8 @@ export class AuthService {
     })
 
     await this.userRepository.save(user)
+
+    await createDefaultData(user.id, this)
 
     const payload = { sub: user.id, email: user.email }
     return {

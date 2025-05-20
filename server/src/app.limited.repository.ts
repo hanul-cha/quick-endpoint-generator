@@ -110,21 +110,9 @@ export function createLimitedRepository(
         const { name, columns } = table
         return appService.dataTableService.update(id, name, columns, userId)
       },
-      delete: async (id?: string) => {
-        if (!id) {
-          throw new HttpException('id is required', HttpStatus.BAD_REQUEST)
-        }
-        // 먼저 테이블이 존재하고 권한이 있는지 확인
-        const table = await appService.dataTableService.findOne(id)
-        if (!table || table.userId !== userId) {
-          throw new HttpException(
-            'Access denied to this table',
-            HttpStatus.FORBIDDEN,
-          )
-        }
-        return appService.dataTableService.remove(id)
+      delete: async (where?: object) => {
+        return appService.dataTableService.remove(userId, where)
       },
-      // 추가 제한된 메서드들...
     },
     row: {
       findOne: async (id?: string) => {

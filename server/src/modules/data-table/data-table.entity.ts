@@ -11,8 +11,15 @@ import {
 } from 'class-validator'
 
 import { DataRow } from '../data-row/data-row.entity'
-import { GlobalPrimitive } from 'src/app.types'
 import { Type } from 'class-transformer'
+
+export enum DataColumnType {
+  String = 'String',
+  Number = 'Number',
+  Boolean = 'Boolean',
+  Date = 'Date',
+  Json = 'Json',
+}
 
 export class DataColumn {
   id: string
@@ -21,9 +28,9 @@ export class DataColumn {
   @IsNotEmpty()
   name: string
 
-  @IsEnum(GlobalPrimitive)
+  @IsEnum(DataColumnType)
   @IsNotEmpty()
-  type: GlobalPrimitive
+  type: DataColumnType
 
   @IsBoolean()
   @IsOptional()

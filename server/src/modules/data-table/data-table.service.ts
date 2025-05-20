@@ -15,8 +15,8 @@ export class DataTableService {
     private readonly dataTableRepository: Repository<DataTable>,
   ) {}
 
-  private setColumnIds(columns: DataColumn[]) {
-    columns.forEach((column, index) => {
+  private setColumnIds(columns?: DataColumn[]) {
+    columns?.forEach((column, index) => {
       column.id = `${index + 1}`
     })
   }
@@ -72,7 +72,10 @@ export class DataTableService {
     return await this.findOne(id)
   }
 
-  async remove(id: string) {
-    return await this.dataTableRepository.delete(id)
+  async remove(userId: number, where?: FindOptionsWhere<DataTable>) {
+    return await this.dataTableRepository.delete({
+      ...where,
+      userId,
+    })
   }
 }

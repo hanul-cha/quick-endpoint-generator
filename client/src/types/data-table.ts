@@ -3,7 +3,7 @@ export type ColumnId = string
 export interface DataColumn {
   id: ColumnId
   name: string
-  type: string
+  type: ColumnType
   required?: boolean
 }
 
@@ -16,4 +16,10 @@ export interface DataTable {
   updatedAt: Date
 }
 
-export type ColumnType = 'string' | 'number' | 'boolean' | 'date' | 'json'
+export enum ColumnType {
+  String = 'String',
+  Number = 'Number',
+  Boolean = 'Boolean',
+  Date = 'Date',
+  Json = 'Json',
+}

@@ -81,7 +81,7 @@ export class DataTableController {
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return await this.dataTableService.remove(id)
+  async remove(@Param('id') id: string, @CurrentUser() user: User) {
+    return await this.dataTableService.remove(user.id, { id })
   }
 }

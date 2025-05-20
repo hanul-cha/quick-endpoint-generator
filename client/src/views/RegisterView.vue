@@ -49,6 +49,11 @@
         </div>
       </form>
     </div>
+    <transition name="fade">
+      <div v-if="showToast" class="fixed z-50 px-6 py-3 text-white transform -translate-x-1/2 bg-green-500 rounded shadow-lg bottom-8 left-1/2">
+        {{ toastMessage }}
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -64,9 +69,20 @@ const formData = ref({
   name: ''
 });
 
+// Toast 상태 및 함수 추가
+const showToast = ref(false)
+const toastMessage = ref('')
+const showToastMessage = (message) => {
+  toastMessage.value = message
+  showToast.value = true
+  setTimeout(() => {
+    showToast.value = false
+  }, 3000)
+}
+
 const handleSubmit = async () => {
   if (formData.value.password !== formData.value.confirmPassword) {
-    alert('Passwords do not match.');
+    showToastMessage('비밀번호가 일치하지 않습니다.')
     return;
   }
 
@@ -84,14 +100,14 @@ const handleSubmit = async () => {
     });
 
     if (response.ok) {
-      alert('Registration completed successfully.');
-      router.push('/login');
+      showToastMessage('회원가입이 성공적으로 완료되었습니다.')
+      setTimeout(() => router.push('/login'), 1000)
     } else {
-      alert('Registration failed.');
+      showToastMessage('회원가입에 실패했습니다.')
     }
   } catch (error) {
     console.error('Registration error:', error);
-    alert('An error occurred during registration.');
+    showToastMessage('회원가입 중 오류가 발생했습니다.')
   }
 };
 </script>
@@ -170,5 +186,14 @@ a {
 
 a:hover {
   text-decoration: underline;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

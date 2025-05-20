@@ -207,7 +207,7 @@
 
             <!-- String input field -->
             <input
-              v-if="column.type === 'string'"
+              v-if="column.type === ColumnType.String"
               v-model="editingRow.values[column.id]"
               type="text"
               :class="[
@@ -220,7 +220,7 @@
 
             <!-- Number input field -->
             <input
-              v-else-if="column.type === 'number'"
+              v-else-if="column.type === ColumnType.Number"
               v-model.number="editingRow.values[column.id]"
               type="number"
               :class="[
@@ -232,7 +232,7 @@
             />
 
             <!-- Boolean input field -->
-            <div v-else-if="column.type === 'boolean'" class="flex items-center space-x-2">
+            <div v-else-if="column.type === ColumnType.Boolean" class="flex items-center space-x-2">
               <input
                 :id="`boolean-${column.id}`"
                 v-model="editingRow.values[column.id]"
@@ -244,7 +244,7 @@
 
             <!-- Date input field -->
             <input
-              v-else-if="column.type === 'date'"
+              v-else-if="column.type === ColumnType.Date"
               v-model="editingRow.values[column.id]"
               type="date"
               :class="[
@@ -256,9 +256,11 @@
             />
 
             <!-- JSON input field -->
-            <div style="height:200px;">
+            <div
+              v-else-if="column.type === ColumnType.Json"
+              style="height:200px;"
+            >
               <JsonEditor
-                v-if="column.type === 'json'"
                 v-model="editingRow.values[column.id]"
                 :class="[
                   'mt-1',
@@ -348,7 +350,7 @@ import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { tableApi } from '../api/table'
 import { rowApi } from '../api/row'
-import type { DataTable } from '../types/data-table'
+import { ColumnType, DataColumn, type DataTable } from '../types/data-table'
 import type { DataRow } from '@/types/data-row'
 import JsonEditor from '@/components/JsonEditor.vue'
 import TableEditModal from '@/components/TableEditModal.vue'
@@ -451,7 +453,7 @@ const editRow = (row: DataRow) => {
   // JSON 타입 값을 문자열로 변환
   if (table.value) {
     table.value.columns.forEach(column => {
-      if (column.type === 'json' && valuesCopy[column.id] !== null && valuesCopy[column.id] !== undefined) {
+      if (column.type === ColumnType.Json && valuesCopy[column.id] !== null && valuesCopy[column.id] !== undefined) {
         // 이미 문자열이 아니라면 JSON.stringify 처리
         if (typeof valuesCopy[column.id] !== 'string') {
           valuesCopy[column.id] = JSON.stringify(valuesCopy[column.id], null, 2);
@@ -477,19 +479,19 @@ const initCreateRow = () => {
     table.value.columns.forEach(column => {
       // Set default values based on data type
       switch (column.type) {
-        case 'string':
+        case ColumnType.String:
           values[column.id] = ''
           break
-        case 'number':
+        case ColumnType.Number:
           values[column.id] = 0
           break
-        case 'boolean':
+        case ColumnType.Boolean:
           values[column.id] = false
           break
-        case 'date':
+        case ColumnType.Date:
           values[column.id] = new Date().toISOString().split('T')[0]
           break
-        case 'json':
+        case ColumnType.Json:
           values[column.id] = '{}'
           break
         default:
@@ -516,7 +518,7 @@ const saveRow = async () => {
 
     if (table.value) {
       table.value.columns.forEach(column => {
-        if (column.type === 'json' && values[column.id]) {
+        if (column.type === ColumnType.Json && values[column.id]) {
           try {
             // 문자열을 JSON 객체로 파싱
             values[column.id] = JSON.parse(values[column.id]);
@@ -576,7 +578,7 @@ const validateRowData = () => {
     }
 
     // JSON 형식 검사
-    if (column.type === 'json' && !isEmpty(value)) {
+    if (column.type === ColumnType.Json && !isEmpty(value)) {
       try {
         JSON.parse(value);
       } catch (e) {
@@ -767,7 +769,7 @@ const showTooltip = (event: MouseEvent, column: any, value: any) => {
 };
 
 // 행의 특정 컬럼 값이 타입이 변경되었는지 또는 필수값이 누락되었는지 확인하는 함수
-const shouldHighlightValue = (column: any, value: any): boolean => {
+const shouldHighlightValue = (column: DataColumn, value: any): boolean => {
   // 필수값인데 비어있는 경우
   if (column.required && isEmpty(value)) {
     return true;
@@ -787,25 +789,25 @@ const isEmpty = (value: any): boolean => {
 }
 
 // 값의 타입이 컬럼 타입과 일치하는지 확인
-const isCorrectType = (column: any, value: any): boolean => {
+const isCorrectType = (column: DataColumn, value: any): boolean => {
   if (isEmpty(value)) return true; // 비어있는 경우는 타입 체크 불필요
 
   const valueType = typeof value;
 
   // 문자열 타입 체크
-  if (column.type === 'string' && valueType !== 'string') return false;
+  if (column.type === ColumnType.String && valueType !== 'string') return false;
 
   // 숫자 타입 체크
-  if (column.type === 'number' && valueType !== 'number') return false;
+  if (column.type === ColumnType.Number && valueType !== 'number') return false;
 
   // 불리언 타입 체크
-  if (column.type === 'boolean' && valueType !== 'boolean') return false;
+  if (column.type === ColumnType.Boolean && valueType !== 'boolean') return false;
 
   // 날짜 타입 체크 (문자열이지만 날짜 형식인지 확인)
-  if (column.type === 'date' && !isValidDate(value)) return false;
+  if (column.type === ColumnType.Date && !isValidDate(value)) return false;
 
   // JSON 타입 체크 (객체이거나 JSON 문자열인지 확인)
-  if (column.type === 'json' && !isValidJson(value)) return false;
+  if (column.type === ColumnType.Json && !isValidJson(value)) return false;
 
   return true;
 }

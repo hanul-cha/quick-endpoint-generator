@@ -55,16 +55,16 @@
                   />
                 </div>
                 <div class="w-1/2 pl-2">
-                  <div class="text-sm font-medium text-gray-700">Type</div>
+                  <div class="text-sm font-medium text-gray-700">Typez</div>
                   <select
                     v-model="column.type"
                     class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:border-indigo-500 focus:outline-none"
                   >
-                    <option value="string">String</option>
-                    <option value="number">Number</option>
-                    <option value="boolean">Boolean</option>
-                    <option value="date">Date</option>
-                    <option value="json">JSON</option>
+                    <option value="String">String</option>
+                    <option value="Number">Number</option>
+                    <option value="Boolean">Boolean</option>
+                    <option value="Date">Date</option>
+                    <option value="Json">JSON</option>
                   </select>
                 </div>
               </div>
@@ -123,7 +123,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import type { DataTable } from '@/types/data-table'
+import { DataTable, ColumnType } from '@/types/data-table'
 
 const props = defineProps({
   modelValue: {
@@ -169,7 +169,7 @@ const addColumn = () => {
   localTable.value.columns.push({
     id: `${columnLength + 1}`,
     name: '',
-    type: 'string',
+    type: ColumnType.String,
     required: false
   })
 }

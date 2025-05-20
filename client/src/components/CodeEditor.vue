@@ -119,7 +119,7 @@ function repoCompletions(context: CompletionContext) {
         { label: 'find', type: 'method', info: 'Find tables by conditions', apply: 'find(where, options)' },
         { label: 'create', type: 'method', info: 'Create a new table', apply: 'create({\n    name: "tableName",\n    columns: []\n  })', },
         { label: 'update', type: 'method', info: 'Update a table', apply: 'update(id, data)' },
-        { label: 'delete', type: 'method', info: 'Delete a table', apply: 'delete(id)' }
+        { label: 'delete', type: 'method', info: 'Delete a table', apply: 'delete(where)' }
       ]
     }
   }

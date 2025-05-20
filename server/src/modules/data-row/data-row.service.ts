@@ -8,8 +8,7 @@ import {
   PaginatedResult,
   PaginationOptions,
 } from 'src/util/pagination'
-import { DataTable } from '../data-table/data-table.entity'
-import { GlobalPrimitive } from 'src/app.types'
+import { DataColumnType, DataTable } from '../data-table/data-table.entity'
 import { deleteEmptyStringObject } from 'src/util/emptyObject'
 
 @Injectable()
@@ -332,33 +331,25 @@ export class DataRowService {
   }
 
   private validateColumnType(
-    type: GlobalPrimitive | string,
+    type: DataColumnType | string,
     value: any,
   ): boolean {
-    // 타입 문자열 변환 (대소문자 통일을 위해)
-    const normalizedType =
-      typeof type === 'string' ? type.toLowerCase() : String(type).toLowerCase()
-
-    switch (normalizedType) {
-      case GlobalPrimitive.String.toLowerCase():
+    switch (type) {
+      case DataColumnType.String:
         return typeof value === 'string'
 
-      case GlobalPrimitive.Number.toLowerCase():
+      case DataColumnType.Number:
         return typeof value === 'number' && !isNaN(value)
 
-      case GlobalPrimitive.Boolean.toLowerCase():
+      case DataColumnType.Boolean:
         return typeof value === 'boolean'
 
-      case GlobalPrimitive.Array.toLowerCase():
-        return Array.isArray(value)
-
-      case GlobalPrimitive.Object.toLowerCase():
-      case 'json': // json 타입은 Object와 동일하게 처리
+      case DataColumnType.Json:
         return (
           typeof value === 'object' && value !== null && !Array.isArray(value)
         )
 
-      case 'date': // 날짜 타입 처리
+      case DataColumnType.Date:
         if (value instanceof Date) {
           return !isNaN(value.getTime()) // 유효한 날짜인지 확인
         }

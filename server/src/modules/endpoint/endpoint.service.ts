@@ -14,7 +14,7 @@ import {
 export class EndpointService {
   constructor(
     @InjectRepository(Endpoint)
-    private endpointRepository: Repository<Endpoint>,
+    readonly endpointRepository: Repository<Endpoint>,
   ) {}
 
   async create(createEndpointDto: CreateEndpointDto, userId: number) {
