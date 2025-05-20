@@ -25,11 +25,11 @@ import { UsersModule } from './modules/users/users.module'
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: 'postgres',
-      database: 'postgres',
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT),
+      username: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_DATABASE,
       entities: [DataTable, DataRow, User, Endpoint],
       synchronize: true, // 개발 환경에서만 true로 설정
     }),
