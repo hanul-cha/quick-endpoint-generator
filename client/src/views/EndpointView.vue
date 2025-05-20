@@ -327,13 +327,11 @@
                     <option :value="true">true</option>
                     <option :value="false">false</option>
                   </select>
-                  <textarea
+                  <JsonEditor
                     v-else-if="param.type === 'Object' || param.type === 'Array'"
                     v-model="testParameters[key].value"
-                    rows="2"
-                    class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:border-indigo-500 focus:outline-none"
-                    :placeholder="`Enter ${param.type} value (JSON format)`"
-                  ></textarea>
+                    class="block w-full mt-1"
+                  />
                 </div>
               </div>
             </div>
@@ -400,6 +398,7 @@ import type { Endpoint, Parameter, ParameterFieldWithKey, ParameterType } from '
 import { endpointApi } from '@/api/endpoint'
 import CodeEditor from '@/components/CodeEditor.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
+import JsonEditor from '@/components/JsonEditor.vue'
 
 interface PaginatedResponse<T> {
   items: T[]

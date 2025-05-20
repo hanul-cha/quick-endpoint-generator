@@ -84,7 +84,9 @@ onBeforeUnmount(() => {
 }
 
 .json-editor-container {
-  height: 400px;
+  height: 100%;
+  min-height: 120px;
+  max-height: 250px;
   width: 100%;
   border-radius: 0.375rem;
   overflow: hidden;
@@ -97,8 +99,7 @@ onBeforeUnmount(() => {
 }
 
 :deep(.jsoneditor-menu) {
-  background-color: #4f46e5; /* Tailwind bg-indigo-600 */
-  border-color: #4338ca; /* Tailwind border-indigo-700 */
+  display: none;
 }
 
 :deep(.jsoneditor-statusbar) {

@@ -14,7 +14,7 @@
             ID: {{ tableId }}
             <button
               @click="copyId(tableId)"
-              class="ml-1 text-xs text-gray-500 hover:text-indigo-600 focus:outline-none align-middle"
+              class="ml-1 text-xs text-gray-500 align-middle hover:text-indigo-600 focus:outline-none"
               title="ID 복사"
             >
               <svg class="inline w-4 h-4 align-middle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -256,14 +256,16 @@
             />
 
             <!-- JSON input field -->
-            <JsonEditor
-              v-else-if="column.type === 'json'"
-              v-model="editingRow.values[column.id]"
-              :class="[
-                'mt-1',
-                formErrors[column.id] ? 'border-red-500' : ''
-              ]"
-            />
+            <div style="height:200px;">
+              <JsonEditor
+                v-if="column.type === 'json'"
+                v-model="editingRow.values[column.id]"
+                :class="[
+                  'mt-1',
+                  formErrors[column.id] ? 'border-red-500' : ''
+                ]"
+              />
+            </div>
 
             <!-- Error message -->
             <p v-if="formErrors[column.id]" class="mt-1 text-sm text-red-600">
