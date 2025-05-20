@@ -58,6 +58,7 @@
 </template>
 
 <script setup>
+import { api } from '@/api/client';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -87,19 +88,13 @@ const handleSubmit = async () => {
   }
 
   try {
-    const response = await fetch('http://localhost:3000/auth/signup', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: formData.value.email,
-        password: formData.value.password,
-        name: formData.value.name
-      }),
+    const data = await api.post('/auth/signup', {
+      email: formData.value.email,
+      password: formData.value.password,
+      name: formData.value.name
     });
 
-    if (response.ok) {
+    if (data.access_token) {
       showToastMessage('Registration completed successfully.')
       setTimeout(() => router.push('/login'), 1000)
     } else {

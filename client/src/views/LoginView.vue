@@ -33,6 +33,7 @@
 </template>
 
 <script setup>
+import { api } from '@/api/client';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -44,16 +45,9 @@ const formData = ref({
 
 const handleSubmit = async () => {
   try {
-    const response = await fetch('http://localhost:3000/auth/signin', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(formData.value),
-    });
+    const data = await api.post('/auth/signin', formData.value);
 
-    if (response.ok) {
-      const data = await response.json();
+    if (data.access_token) {
       localStorage.setItem('token', data.access_token);
       router.push('/data/endpoint');
     } else {
