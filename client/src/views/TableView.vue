@@ -15,7 +15,7 @@
             <button
               @click="copyId(tableId)"
               class="ml-1 text-xs text-gray-500 align-middle hover:text-indigo-600 focus:outline-none"
-              title="ID 복사"
+              title="Copy ID"
             >
               <svg class="inline w-4 h-4 align-middle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16h8a2 2 0 002-2V8a2 2 0 00-2-2H8a2 2 0 00-2 2v6a2 2 0 002 2z" />
@@ -851,9 +851,9 @@ const goToSchemaManagement = () => {
 const copyId = async (id: string) => {
   try {
     await navigator.clipboard.writeText(id)
-    showToastMessage('ID가 클립보드에 복사되었습니다.')
+    showToastMessage('ID copied to clipboard.')
   } catch (e) {
-    showToastMessage('클립보드 복사에 실패했습니다.')
+    showToastMessage('Failed to copy to clipboard.')
   }
 }
 </script>

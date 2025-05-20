@@ -82,7 +82,7 @@ const showToastMessage = (message) => {
 
 const handleSubmit = async () => {
   if (formData.value.password !== formData.value.confirmPassword) {
-    showToastMessage('비밀번호가 일치하지 않습니다.')
+    showToastMessage('Passwords do not match.')
     return;
   }
 
@@ -100,14 +100,14 @@ const handleSubmit = async () => {
     });
 
     if (response.ok) {
-      showToastMessage('회원가입이 성공적으로 완료되었습니다.')
+      showToastMessage('Registration completed successfully.')
       setTimeout(() => router.push('/login'), 1000)
     } else {
-      showToastMessage('회원가입에 실패했습니다.')
+      showToastMessage('Registration failed.')
     }
   } catch (error) {
     console.error('Registration error:', error);
-    showToastMessage('회원가입 중 오류가 발생했습니다.')
+    showToastMessage('An error occurred during registration.')
   }
 };
 </script>
