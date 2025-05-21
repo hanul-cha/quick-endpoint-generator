@@ -23,7 +23,10 @@
             placeholder="Enter your password"
           />
         </div>
-        <button type="submit" class="submit-btn">Login</button>
+        <button type="submit" class="submit-btn" :disabled="isLoading">
+          <div v-if="isLoading" class="loading-spinner"></div>
+          {{ isLoading ? 'Logging in...' : 'Login' }}
+        </button>
         <div class="register-link">
           Don't have an account? <router-link to="/register">Register</router-link>
         </div>
@@ -43,7 +46,10 @@ const formData = ref({
   password: ''
 });
 
+const isLoading = ref(false);
+
 const handleSubmit = async () => {
+  isLoading.value = true;
   try {
     const data = await api.post('/auth/signin', formData.value);
 
@@ -56,6 +62,8 @@ const handleSubmit = async () => {
   } catch (error) {
     console.error('로그인 에러:', error);
     alert('로그인 중 오류가 발생했습니다.');
+  } finally {
+    isLoading.value = false;
   }
 };
 </script>
@@ -116,10 +124,29 @@ input {
   font-size: 16px;
   cursor: pointer;
   transition: background-color 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
-.submit-btn:hover {
-  background-color: #1565c0;
+.submit-btn:disabled {
+  background-color: #90caf9;
+  cursor: not-allowed;
+}
+
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ffffff;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .register-link {
