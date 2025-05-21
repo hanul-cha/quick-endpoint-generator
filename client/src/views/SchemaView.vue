@@ -52,16 +52,16 @@
                 </svg>
               </button>
             </div>
-            <div class="space-x-2">
+            <div class="space-x-2 text-sm">
               <button
                 @click.stop="editTable(table)"
-                class="px-3 py-1 text-indigo-600 transition border border-indigo-600 rounded-md hover:bg-indigo-50"
+                class="px-3 py-1 text-indigo-600 transition rounded-md hover:bg-indigo-50"
               >
                 Edit
               </button>
               <button
                 @click.stop="deleteTable(table.id)"
-                class="px-3 py-1 text-red-600 transition border border-red-600 rounded-md hover:bg-red-50"
+                class="px-3 py-1 text-red-600 transition rounded-md hover:bg-red-50"
               >
                 Delete
               </button>

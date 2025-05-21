@@ -30,7 +30,7 @@
 
       <div v-else class="space-y-6">
         <div v-for="endpoint in endpoints.items" :key="endpoint.id" class="p-4 border rounded-lg">
-          <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center justify-between">
             <div class="flex flex-col space-y-2">
               <div class="flex items-center space-x-2">
                 <h3 class="text-lg font-medium">{{ endpoint.name }}</h3>
@@ -57,22 +57,22 @@
                 </button>
               </div>
             </div>
-            <div class="space-x-2">
+            <div class="space-x-2 text-sm">
               <button
                 @click="runEndpoint(endpoint)"
-                class="px-3 py-1 text-green-600 transition border border-green-600 rounded-md hover:bg-green-50"
+                class="px-3 py-1 text-green-600 transition rounded-md hover:bg-green-50"
               >
                 Run Endpoint
               </button>
               <button
                 @click="editEndpoint(endpoint)"
-                class="px-3 py-1 text-indigo-600 transition border border-indigo-600 rounded-md hover:bg-indigo-50"
+                class="px-3 py-1 text-indigo-600 transition rounded-md hover:bg-indigo-50"
               >
                 Edit
               </button>
               <button
                 @click="deleteEndpoint(endpoint.id)"
-                class="px-3 py-1 text-red-600 transition border border-red-600 rounded-md hover:bg-red-50"
+                class="px-3 py-1 text-red-600 transition rounded-md hover:bg-red-50"
               >
                 Delete
               </button>
@@ -226,7 +226,7 @@
               </div>
               <button
                 @click="addField"
-                class="inline-flex items-center px-3 py-2 text-sm font-medium text-indigo-600 border border-indigo-600 rounded-md hover:bg-indigo-50"
+                class="inline-flex items-center px-3 py-2 text-sm font-medium text-indigo-600 rounded-md hover:bg-indigo-50"
               >
                 Add Field
               </button>
