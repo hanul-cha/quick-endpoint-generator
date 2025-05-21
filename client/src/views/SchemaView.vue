@@ -12,7 +12,19 @@
 
     <!-- 기존 테이블 목록 -->
     <div class="p-6 bg-white border border-gray-200 rounded-lg">
-      <div v-if="tables.items.length === 0" class="py-12 text-center">
+      <div v-if="isLoading" class="space-y-6">
+        <div v-for="n in 3" :key="n" class="flex items-center justify-between p-4 border rounded-lg animate-pulse bg-gray-50">
+          <div class="flex items-center space-x-2">
+            <div class="w-32 h-6 bg-gray-200 rounded"></div>
+            <div class="w-40 h-5 bg-gray-200 rounded"></div>
+          </div>
+          <div class="flex space-x-2">
+            <div class="w-12 h-8 bg-gray-200 rounded"></div>
+            <div class="w-12 h-8 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </div>
+      <div v-else-if="tables.items.length === 0" class="py-12 text-center">
         <svg class="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
         </svg>
@@ -161,6 +173,7 @@ const toastMessage = ref('')
 
 const showDeleteModal = ref(false)
 const deletingTableId = ref<string | null>(null)
+const isLoading = ref(true)
 
 const handleEscKey = (event: KeyboardEvent) => {
   if (event.key === 'Escape' && showModal.value) {
@@ -242,11 +255,14 @@ const navigateToTable = (tableId: string) => {
 
 // 컴포넌트 마운트 시 테이블 목록 로드
 const loadTables = async (page?: number) => {
+  isLoading.value = true
   try {
     tables.value = await tableApi.getMyTables({ page: page || 1 })
   } catch (error) {
     console.error('Failed to load tables:', error)
     alert('An error occurred while loading the table list.')
+  } finally {
+    isLoading.value = false
   }
 }
 

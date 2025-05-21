@@ -12,7 +12,28 @@
 
     <!-- 기존 엔드포인트 목록 -->
     <div class="p-6 bg-white border border-gray-200 rounded-lg">
-      <div v-if="endpoints.items.length === 0" class="py-12 text-center">
+      <div v-if="isLoading" class="space-y-6">
+        <div v-for="n in 3" :key="n" class="p-4 border rounded-lg animate-pulse bg-gray-50">
+          <div class="flex items-center justify-between">
+            <div class="flex flex-col space-y-2 w-full">
+              <div class="flex items-center space-x-2">
+                <div class="h-6 w-1/4 bg-gray-200 rounded"></div>
+                <div class="h-5 w-12 bg-gray-200 rounded"></div>
+              </div>
+              <div class="flex items-center mt-2">
+                <div class="h-4 w-2/3 bg-gray-200 rounded"></div>
+                <div class="h-4 w-6 bg-gray-200 rounded ml-2"></div>
+              </div>
+            </div>
+            <div class="flex space-x-2 ml-4">
+              <div class="h-8 w-20 bg-gray-200 rounded"></div>
+              <div class="h-8 w-12 bg-gray-200 rounded"></div>
+              <div class="h-8 w-12 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div v-else-if="endpoints.items.length === 0" class="py-12 text-center">
         <svg class="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
         </svg>
@@ -498,7 +519,10 @@ onUnmounted(() => {
   document.removeEventListener('keydown', handleEscKey)
 })
 
+const isLoading = ref(false)
+
 const loadEndpoints = async (page?: number) => {
+  isLoading.value = true
   try {
     const response = await endpointApi.getMyEndpoints({ page: page || 1 })
     endpoints.value = response
@@ -516,6 +540,8 @@ const loadEndpoints = async (page?: number) => {
       hasPreviousPage: false,
       offset: 0
     }
+  } finally {
+    isLoading.value = false
   }
 }
 
@@ -618,7 +644,6 @@ const currentEndpoint = ref<Endpoint | null>(null)
 const testUrl = ref('')
 const testParameters = ref<Record<string, { key: string; value: any }>>({})
 const testResponse = ref<any>(null)
-const isLoading = ref(false)
 const errorMessage = ref<string | null>(null)
 
 // 테스트 모달 열기
@@ -667,14 +692,12 @@ const closeTestModal = () => {
   testParameters.value = {}
   testResponse.value = null
   errorMessage.value = null
-  isLoading.value = false
 }
 
 // 테스트 요청 보내기
 const sendTestRequest = async () => {
   if (!currentEndpoint.value) return
 
-  isLoading.value = true
   errorMessage.value = null
   testResponse.value = null
 
@@ -728,8 +751,6 @@ const sendTestRequest = async () => {
   } catch (error) {
     console.error('Test request failed:', error)
     errorMessage.value = error instanceof Error ? error.message : '요청을 보내는 중 오류가 발생했습니다.'
-  } finally {
-    isLoading.value = false
   }
 }
 

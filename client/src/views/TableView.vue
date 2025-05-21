@@ -1,8 +1,53 @@
 <template>
   <div class="container px-4 py-8 mx-auto">
     <!-- Loading state -->
-    <div v-if="loading" class="flex items-center justify-center py-12">
-      <div class="w-8 h-8 border-4 border-indigo-600 rounded-full animate-spin border-t-transparent"></div>
+    <div v-if="loading">
+      <!-- Table Structure Skeleton -->
+      <div class="p-4 mb-6 bg-white border border-gray-200 rounded-lg">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-40 h-6 bg-gray-200 rounded animate-pulse"></div>
+          <div class="w-20 h-8 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+        <div class="overflow-x-auto border rounded-md">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3"><div class="w-24 h-4 bg-gray-200 rounded animate-pulse"></div></th>
+                <th class="px-6 py-3"><div class="w-16 h-4 bg-gray-200 rounded animate-pulse"></div></th>
+                <th class="px-6 py-3"><div class="w-16 h-4 bg-gray-200 rounded animate-pulse"></div></th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr v-for="n in 3" :key="n">
+                <td class="px-6 py-4"><div class="w-24 h-4 bg-gray-100 rounded animate-pulse"></div></td>
+                <td class="px-6 py-4"><div class="w-16 h-4 bg-gray-100 rounded animate-pulse"></div></td>
+                <td class="px-6 py-4"><div class="w-16 h-4 bg-gray-100 rounded animate-pulse"></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Data Table Skeleton -->
+      <div class="p-4 bg-white border border-gray-200 rounded-lg">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-24 h-6 bg-gray-200 rounded animate-pulse"></div>
+          <div class="w-24 h-8 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+        <div class="overflow-x-auto border rounded-md">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th v-for="n in 7" :key="n" class="px-6 py-3"><div class="w-16 h-4 bg-gray-200 rounded animate-pulse"></div></th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr v-for="n in 3" :key="n">
+                <td v-for="m in 7" :key="m" class="px-6 py-4"><div class="w-16 h-4 bg-gray-100 rounded animate-pulse"></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <div v-else>
