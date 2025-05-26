@@ -25,7 +25,7 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
     const pagination = ref<any>(null)
 
     const loadItems = async (...args: Parameters<Api['pagination']>) => {
-      if (isInitialized.value && !args.length) {
+      if (isInitialized.value) {
         return items.value
       }
       isLoading.value = true
