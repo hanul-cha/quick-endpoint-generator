@@ -3,7 +3,7 @@
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-3xl font-bold">Tables</h1>
       <button
-        @click="showModal = true"
+        @click="openCreateModal"
         class="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
       >
         Create Table
@@ -12,7 +12,7 @@
 
     <!-- 기존 테이블 목록 -->
     <div class="p-6 bg-white border border-gray-200 rounded-lg">
-      <div v-if="isLoading" class="space-y-6">
+      <div v-if="tableStore.isLoading && !tableStore.isInitialized" class="space-y-6">
         <div v-for="n in 3" :key="n" class="flex items-center justify-between p-4 border rounded-lg animate-pulse bg-gray-50">
           <div class="flex items-center space-x-2">
             <div class="w-32 h-6 bg-gray-200 rounded"></div>
@@ -24,7 +24,7 @@
           </div>
         </div>
       </div>
-      <div v-else-if="tables.items.length === 0" class="py-12 text-center">
+      <div v-else-if="tableStore.items.items.length === 0" class="py-12 text-center">
         <svg class="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
         </svg>
@@ -32,7 +32,7 @@
         <p class="mt-1 text-sm text-gray-500">Get started by creating a new table.</p>
         <div class="mt-6">
           <button
-            @click="showModal = true"
+            @click="openCreateModal"
             class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
             Create Table
@@ -42,7 +42,7 @@
 
       <div v-else class="space-y-6">
         <div
-          v-for="table in tables.items"
+          v-for="table in tableStore.items.items"
           :key="table.id"
           class="p-4 border rounded-lg cursor-pointer hover:bg-gray-50"
           @click="navigateToTable(table.id)"
@@ -82,21 +82,21 @@
         </div>
 
         <!-- 페이지네이션 -->
-        <div v-if="tables.totalPages > 0" class="flex items-center justify-between mt-4">
+        <div v-if="tableStore.items.totalPages > 0" class="flex items-center justify-between mt-4">
           <button
-            @click="loadTables(tables.page - 1)"
-            :disabled="!tables.hasPreviousPage"
-            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            @click="loadTables(tableStore.items.page - 1, true)"
+            :disabled="!tableStore.items.hasPreviousPage"
+            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Previous
           </button>
           <span class="text-sm text-gray-700">
-            Page {{ tables.page }} of {{ tables.totalPages }}
+            Page {{ tableStore.items.page }} of {{ tableStore.items.totalPages }}
           </span>
           <button
-            @click="loadTables(tables.page + 1)"
-            :disabled="!tables.hasNextPage"
-            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            @click="loadTables(tableStore.items.page + 1, true)"
+            :disabled="!tableStore.items.hasNextPage"
+            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Next
           </button>
@@ -135,22 +135,12 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import type { DataTable } from '../types/data-table'
-import { tableApi } from '../api/table'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 import TableEditModal from '@/components/TableEditModal.vue'
 import { useRouter } from 'vue-router'
-import { PaginatedResponse } from '@/api/pagination'
+import { useTableStore } from '@/stores/table'
 
-const tables = ref<PaginatedResponse<DataTable>>({
-  items: [],
-  total: 0,
-  page: 1,
-  limit: 10,
-  totalPages: 0,
-  hasNextPage: false,
-  hasPreviousPage: false,
-  offset: 0
-})
+const tableStore = useTableStore()
 const showModal = ref(false)
 const isEditing = ref(false)
 const editingTable = ref<Partial<DataTable>>({
@@ -163,7 +153,6 @@ const toastMessage = ref('')
 
 const showDeleteModal = ref(false)
 const deletingTableId = ref<string | null>(null)
-const isLoading = ref(true)
 
 const handleEscKey = (event: KeyboardEvent) => {
   if (event.key === 'Escape' && showModal.value) {
@@ -173,6 +162,7 @@ const handleEscKey = (event: KeyboardEvent) => {
 
 onMounted(() => {
   document.addEventListener('keydown', handleEscKey)
+  loadTables()
 })
 
 onUnmounted(() => {
@@ -182,24 +172,22 @@ onUnmounted(() => {
 const handleTableSave = async (table: Partial<DataTable>) => {
   try {
     if (isEditing.value && table.id) {
-      const updatedTable = await tableApi.update(table.id, table)
-      const index = tables.value.items.findIndex(t => t.id === updatedTable.id)
-      if (index !== -1) {
-        tables.value.items[index] = updatedTable
-      }
+      await tableStore.updateItem(table.id, table)
+      showToastMessage('Table updated successfully.')
     } else {
-      const newTable = await tableApi.create(table)
-      tables.value.items.unshift(newTable)
+      await tableStore.createItem(table)
+      showToastMessage('Table created successfully.')
     }
+    closeModal()
   } catch (error) {
     console.error(`Failed to ${isEditing.value ? 'update' : 'create'} table:`, error)
-    alert(`An error occurred while ${isEditing.value ? 'updating' : 'creating'} the table.`)
+    showToastMessage(`Failed to ${isEditing.value ? 'update' : 'create'} table.`)
   }
 }
 
 const editTable = (table: DataTable) => {
   isEditing.value = true
-  editingTable.value = { ...table, id: table.id }
+  editingTable.value = { ...table }
   showModal.value = true
 }
 
@@ -212,30 +200,30 @@ const confirmDeleteTable = async () => {
   if (!deletingTableId.value) return
 
   try {
-    await tableApi.delete(deletingTableId.value)
-    tables.value.items = tables.value.items.filter(table => table.id !== deletingTableId.value)
+    await tableStore.deleteItem(deletingTableId.value)
     showDeleteModal.value = false
     deletingTableId.value = null
+    showToastMessage('Table deleted successfully.')
   } catch (error) {
     console.error('Failed to delete table:', error)
-    alert('An error occurred while deleting the table.')
+    showToastMessage('Failed to delete table.')
   }
 }
 
-const showCopyToast = (msg: string) => {
-  toastMessage.value = msg
+const showToastMessage = (message: string) => {
+  toastMessage.value = message
   showToast.value = true
   setTimeout(() => {
     showToast.value = false
-  }, 1500)
+  }, 3000)
 }
 
 const copyId = async (id: string) => {
   try {
     await navigator.clipboard.writeText(id)
-    showCopyToast('Copied')
+    showToastMessage('ID copied to clipboard.')
   } catch (e) {
-    alert('Failed to copy to clipboard.')
+    showToastMessage('Failed to copy to clipboard.')
   }
 }
 
@@ -243,20 +231,35 @@ const navigateToTable = (tableId: string) => {
   router.push(`/table/${tableId}`)
 }
 
-// 컴포넌트 마운트 시 테이블 목록 로드
-const loadTables = async (page?: number) => {
-  isLoading.value = true
+const loadTables = async (page?: number, isReload = false) => {
+  if (isReload) {
+    tableStore.reset()
+  }
   try {
-    tables.value = await tableApi.pagination({ page: page || 1 })
+    await tableStore.loadItems({ page, limit: 10 })
   } catch (error) {
     console.error('Failed to load tables:', error)
-    alert('An error occurred while loading the table list.')
-  } finally {
-    isLoading.value = false
+    showToastMessage('Failed to load tables.')
   }
 }
 
-loadTables()
+const openCreateModal = () => {
+  isEditing.value = false
+  editingTable.value = {
+    name: '',
+    columns: []
+  }
+  showModal.value = true
+}
+
+const closeModal = () => {
+  showModal.value = false
+  isEditing.value = false
+  editingTable.value = {
+    name: '',
+    columns: []
+  }
+}
 </script>
 
 <style scoped>

@@ -1,8 +1,7 @@
 <template>
   <div class="container px-4 py-8 mx-auto">
-    <!-- Loading state -->
-    <div v-if="tableStore.isLoading">
-      <!-- Table Structure Skeleton -->
+    <!-- Table Structure Loading state -->
+    <div v-if="tableStore.isLoading && !tableStore.isInitialized">
       <div class="p-4 mb-6 bg-white border border-gray-200 rounded-lg">
         <div class="flex items-center justify-between mb-4">
           <div class="w-40 h-6 bg-gray-200 rounded animate-pulse"></div>
@@ -27,29 +26,9 @@
           </table>
         </div>
       </div>
-      <!-- Data Table Skeleton -->
-      <div class="p-4 bg-white border border-gray-200 rounded-lg">
-        <div class="flex items-center justify-between mb-4">
-          <div class="w-24 h-6 bg-gray-200 rounded animate-pulse"></div>
-          <div class="w-24 h-8 bg-gray-200 rounded animate-pulse"></div>
-        </div>
-        <div class="overflow-x-auto border rounded-md">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-              <tr>
-                <th v-for="n in 7" :key="n" class="px-6 py-3"><div class="w-16 h-4 bg-gray-200 rounded animate-pulse"></div></th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="n in 3" :key="n">
-                <td v-for="m in 7" :key="m" class="px-6 py-4"><div class="w-16 h-4 bg-gray-100 rounded animate-pulse"></div></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
     </div>
 
+    <!-- Table Structure -->
     <div v-else>
       <!-- Header section -->
       <div class="flex items-center justify-between mb-6">
@@ -135,8 +114,26 @@
           </button>
         </div>
 
+        <!-- Data Loading state -->
+        <div v-if="rowStore.isLoading && !rowStore.isInitialized" class="space-y-4">
+          <div class="overflow-x-auto border rounded-md">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th v-for="n in 7" :key="n" class="px-6 py-3"><div class="w-16 h-4 bg-gray-200 rounded animate-pulse"></div></th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr v-for="n in 3" :key="n">
+                  <td v-for="m in 7" :key="m" class="px-6 py-4"><div class="w-16 h-4 bg-gray-100 rounded animate-pulse"></div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         <!-- When no data is available -->
-        <div v-if="rowStore.items.items.length === 0" class="py-12 text-center">
+        <div v-else-if="rowStore.items.items.length === 0" class="py-12 text-center">
           <svg class="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
           </svg>
@@ -203,7 +200,7 @@
           <!-- Pagination -->
           <div v-if="rowStore.items.totalPages > 0" class="flex items-center justify-between mt-4">
             <button
-              @click="loadRows(rowStore.items.page - 1)"
+              @click="loadRows(rowStore.items.page - 1, true)"
               :disabled="!rowStore.items.hasPreviousPage"
               class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
@@ -213,7 +210,7 @@
               Page {{ rowStore.items.page }} / {{ rowStore.items.totalPages }}
             </span>
             <button
-              @click="loadRows(rowStore.items.page + 1)"
+              @click="loadRows(rowStore.items.page + 1, true)"
               :disabled="!rowStore.items.hasNextPage"
               class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
@@ -449,7 +446,10 @@ const loadTable = async () => {
 }
 
 // Load row data
-const loadRows = async (page = 1) => {
+const loadRows = async (page = 1, isReload = false) => {
+  if (isReload) {
+    rowStore.reset()
+  }
   try {
     await rowStore.loadItems({ page, limit: 10 }, tableId.value)
   } catch (error) {
