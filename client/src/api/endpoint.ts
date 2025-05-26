@@ -28,7 +28,7 @@ class EndpointApi implements ApiType<Endpoint> {
   }
 
   async getItem(id: string) {
-    const response = await api.get<Endpoint>(`/endpoints/${id}`)
+    const response = await api.get<Endpoint | null>(`/endpoints/${id}`)
     return response
   }
 }

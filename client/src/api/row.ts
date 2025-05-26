@@ -14,8 +14,8 @@ class RowApi implements ApiType<DataRow> {
     return response
   }
 
-  async getItem(rowId: string): Promise<DataRow> {
-    const response = await api.get<DataRow>(`/data-rows/${rowId}`)
+  async getItem(rowId: string): Promise<DataRow | null> {
+    const response = await api.get<DataRow | null>(`/data-rows/${rowId}`)
     return response
   }
 

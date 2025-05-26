@@ -24,6 +24,7 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
       hasPreviousPage: false,
       offset: 0
     })
+    const initArgs: Ref<Parameters<Api['pagination']> | null> = ref(null)
 
     const isLoading = ref(false)
     const error = ref<string | null>(null)
@@ -34,6 +35,8 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
       if (isInitialized.value) {
         return items.value
       }
+
+      initArgs.value = args
 
       const option = args[0] ?? {
         page: 1,
@@ -68,9 +71,10 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
       try {
         const newItem = await api.create(args[0], ...args.slice(1))
         if (isInitialized.value) {
-          entities.value.unshift(newItem)
-          initItems.value.itemIds.unshift(newItem.id)
-          initItems.value.total += 1
+          reset()
+          if (initArgs.value) {
+            loadItems(...initArgs.value)
+          }
         }
         return newItem
       } catch (err) {
@@ -105,7 +109,10 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
       try {
         await api.delete(id)
         if (isInitialized.value) {
-          entities.value = entities.value.filter(i => i.id !== id)
+          reset()
+          if (initArgs.value) {
+            loadItems(...initArgs.value)
+          }
         }
       } catch (err) {
         error.value = '삭제 중 오류가 발생했습니다.'

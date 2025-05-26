@@ -28,10 +28,10 @@ export async function paginate<
   const skip = offset || (page - 1) * limit
 
   const [items, total] = await repo.findAndCount({
+    order: { createdAt: 'DESC' } as FindOptionsOrder<T>,
     where,
     skip,
     take: limit,
-    order: { createdAt: 'DESC' } as FindOptionsOrder<T>,
   })
 
   const totalPages = Math.ceil(total / limit)

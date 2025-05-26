@@ -5,5 +5,5 @@ export interface ApiType<T extends { id: string }> {
   create: (data: Partial<T>, ...args: any[]) => Promise<T>
   update: (id: string, data: Partial<T>, ...args: any[]) => Promise<T>
   delete: (id: string) => Promise<void>
-  getItem: (id: string) => Promise<T>
+  getItem: (id: string) => Promise<T | null>
 }

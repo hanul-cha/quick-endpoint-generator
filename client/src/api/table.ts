@@ -13,7 +13,7 @@ class TableApi implements ApiType<DataTable> {
   }
 
   async getItem(tableId: string) {
-    const response = await api.get<DataTable>(`/data-tables/${tableId}`)
+    const response = await api.get<DataTable | null>(`/data-tables/${tableId}`)
     return response
   }
 
