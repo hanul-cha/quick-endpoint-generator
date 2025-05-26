@@ -1,7 +1,7 @@
 <template>
   <div class="container px-4 py-8 mx-auto">
     <!-- Loading state -->
-    <div v-if="loading">
+    <div v-if="tableStore.isLoading">
       <!-- Table Structure Skeleton -->
       <div class="p-4 mb-6 bg-white border border-gray-200 rounded-lg">
         <div class="flex items-center justify-between mb-4">
@@ -136,7 +136,7 @@
         </div>
 
         <!-- When no data is available -->
-        <div v-if="rows.items.length === 0" class="py-12 text-center">
+        <div v-if="rowStore.items.items.length === 0" class="py-12 text-center">
           <svg class="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
           </svg>
@@ -160,8 +160,8 @@
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
-                <tr v-for="(row, index) in rows.items" :key="row.id">
-                  <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">{{ index + 1 + (rows.page - 1) * rows.limit }}</td>
+                <tr v-for="(row, index) in rowStore.items.items" :key="row.id">
+                  <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">{{ index + 1 + (rowStore.items.page - 1) * rowStore.items.limit }}</td>
                   <td v-for="column in table?.columns" :key="column.id"
                     :class="[
                       'px-6 py-4 text-sm whitespace-nowrap relative',
@@ -201,20 +201,20 @@
           </div>
 
           <!-- Pagination -->
-          <div v-if="rows.totalPages > 0" class="flex items-center justify-between mt-4">
+          <div v-if="rowStore.items.totalPages > 0" class="flex items-center justify-between mt-4">
             <button
-              @click="loadRows(rows.page - 1)"
-              :disabled="!rows.hasPreviousPage"
+              @click="loadRows(rowStore.items.page - 1)"
+              :disabled="!rowStore.items.hasPreviousPage"
               class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Previous
             </button>
             <span class="text-sm text-gray-700">
-              Page {{ rows.page }} / {{ rows.totalPages }}
+              Page {{ rowStore.items.page }} / {{ rowStore.items.totalPages }}
             </span>
             <button
-              @click="loadRows(rows.page + 1)"
-              :disabled="!rows.hasNextPage"
+              @click="loadRows(rowStore.items.page + 1)"
+              :disabled="!rowStore.items.hasNextPage"
               class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Next
@@ -393,40 +393,24 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { tableApi } from '../api/table'
-import { rowApi } from '../api/row'
 import { ColumnType, DataColumn, type DataTable } from '../types/data-table'
 import type { DataRow } from '@/types/data-row'
 import JsonEditor from '@/components/JsonEditor.vue'
 import TableEditModal from '@/components/TableEditModal.vue'
+import { useTableStore } from '@/stores/table'
+import { useRowStore } from '@/stores/row'
 
 // Get route and table ID
 const route = useRoute()
 const router = useRouter()
 const tableId = ref(route.params.tableId as string)
 
+// Store instances
+const tableStore = useTableStore()
+const rowStore = useRowStore()
+
 // State management
-const loading = ref(true)
 const table = ref<DataTable | null>(null)
-const rows = ref<{
-  items: DataRow[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-  hasNextPage: boolean;
-  hasPreviousPage: boolean;
-  offset: number;
-}>({
-  items: [],
-  total: 0,
-  page: 1,
-  limit: 10,
-  totalPages: 0,
-  hasNextPage: false,
-  hasPreviousPage: false,
-  offset: 0
-})
 
 // Modal states
 const showRowModal = ref(false)
@@ -457,7 +441,7 @@ const formErrors = ref<Record<string, string>>({})
 // Load table data
 const loadTable = async () => {
   try {
-    table.value = await tableApi.getItem(tableId.value)
+    table.value = await tableStore.getItem(tableId.value)
   } catch (error) {
     console.error('Failed to load table data:', error)
     showToastMessage('Failed to load table data.')
@@ -467,21 +451,17 @@ const loadTable = async () => {
 // Load row data
 const loadRows = async (page = 1) => {
   try {
-    rows.value = await rowApi.pagination({ page, limit: 10 }, tableId.value)
+    await rowStore.loadItems({ page, limit: 10 }, tableId.value)
   } catch (error) {
     console.error('Failed to load row data:', error)
     showToastMessage('Failed to load row data.')
-  } finally {
-    loading.value = false
   }
 }
 
 // Load all data
 const loadData = async () => {
-  loading.value = true
   await loadTable()
   await loadRows()
-  loading.value = false
 }
 
 // Refresh data
@@ -577,13 +557,13 @@ const saveRow = async () => {
 
     if (isEditMode.value && editingRow.value.id) {
       // Update row
-      await rowApi.update(editingRow.value.id, {
+      await rowStore.updateItem(editingRow.value.id, {
         values: values
       })
       showToastMessage('Data updated successfully.')
     } else {
       // Create new row
-      await rowApi.create({
+      await rowStore.createItem({
         dataTableId: tableId.value,
         values: values
       })
@@ -591,7 +571,7 @@ const saveRow = async () => {
     }
 
     // Reload row data
-    loadRows(rows.value.page)
+    loadRows(rowStore.items.page)
     closeModal()
   } catch (error) {
     console.error('Failed to save data:', error)
@@ -657,10 +637,10 @@ const deleteRow = async () => {
   if (!deletingRowId.value) return
 
   try {
-    await rowApi.delete(deletingRowId.value)
+    await rowStore.deleteItem(deletingRowId.value)
 
     // Reload row data
-    loadRows(rows.value.page)
+    loadRows(rowStore.items.page)
     showToastMessage('Data deleted successfully.')
   } catch (error) {
     console.error('Failed to delete data:', error)
@@ -750,9 +730,11 @@ const editTableStructure = () => {
 const handleTableSave = async (updatedTable: Partial<DataTable>) => {
   try {
     if (updatedTable.id) {
-      const result = await tableApi.update(updatedTable.id, updatedTable)
-      table.value = result
-      showToastMessage('Table structure updated successfully.')
+      const result = await tableStore.updateItem(updatedTable.id, updatedTable)
+      if (result) {
+        table.value = result
+        showToastMessage('Table structure updated successfully.')
+      }
     }
   } catch (error) {
     console.error('Failed to update table structure:', error)

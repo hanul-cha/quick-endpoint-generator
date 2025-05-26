@@ -65,6 +65,25 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
       }
     }
 
+    const getItem = async (id: string) => {
+      const findIdx = entities.value.findIndex(i => i.id === id)
+      if (findIdx !== -1) {
+        return entities.value[findIdx]
+      }
+
+      isLoading.value = true
+      error.value = null
+      try {
+        const item = await api.getItem(id)
+        if (item) {
+          entities.value.push(item)
+        }
+        return item
+      } finally {
+        isLoading.value = false
+      }
+    }
+
     const createItem = async (...args: Parameters<Api['create']>) => {
       isLoading.value = true
       error.value = null
@@ -151,6 +170,7 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
       isInitialized,
       pagination,
       loadItems,
+      getItem,
       createItem,
       updateItem,
       deleteItem,
