@@ -1,16 +1,21 @@
-import { Ref, ref } from 'vue'
+import { Ref, computed, ref } from 'vue'
 
 import { ApiType } from '@/api'
 import { PaginatedResponse } from '@/api/pagination'
 import { defineStore } from 'pinia'
+
+type StorePaginatedResponse = Omit<PaginatedResponse<any>, 'items'> & {
+  itemIds: string[]
+}
 
 export function createStore<T extends (Record<string, any> & { id: string }), Api extends ApiType<T> = ApiType<T>>(
   storeId: string,
   api: Api
 ) {
   return defineStore(storeId, () => {
-    const items: Ref<PaginatedResponse<T>> = ref({
-      items: [],
+    const entities: Ref<T[]> = ref([])
+    const initItems: Ref<StorePaginatedResponse> = ref({
+      itemIds: [],
       total: 0,
       page: 1,
       limit: 10,
@@ -19,6 +24,7 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
       hasPreviousPage: false,
       offset: 0
     })
+
     const isLoading = ref(false)
     const error = ref<string | null>(null)
     const isInitialized = ref(false)
@@ -28,12 +34,24 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
       if (isInitialized.value) {
         return items.value
       }
+
+      const option = args[0] ?? {
+        page: 1,
+        limit: 10
+      }
+
+      const restArgs = args.slice(1)
+
       isLoading.value = true
       error.value = null
 
       try {
-        const response = await api.pagination(...args)
-        items.value = response
+        const response = await api.pagination(option, ...restArgs)
+        entities.value = response.items
+        initItems.value = {
+          itemIds: response.items.map(item => item.id),
+          ...response
+        }
         isInitialized.value = true
         return items.value
       } catch (err) {
@@ -50,8 +68,9 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
       try {
         const newItem = await api.create(args[0], ...args.slice(1))
         if (isInitialized.value) {
-          items.value.items.unshift(newItem)
-          items.value.total += 1
+          entities.value.unshift(newItem)
+          initItems.value.itemIds.unshift(newItem.id)
+          initItems.value.total += 1
         }
         return newItem
       } catch (err) {
@@ -68,8 +87,8 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
       try {
         const updated = await api.update(args[0], args[1], ...args.slice(2))
         if (isInitialized.value) {
-          const idx = items.value.items.findIndex(i => i.id === updated.id)
-          if (idx !== -1) items.value.items[idx] = updated
+          const idx = entities.value.findIndex(i => i.id === updated.id)
+          if (idx !== -1) entities.value[idx] = updated
         }
         return updated
       } catch (err) {
@@ -86,7 +105,7 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
       try {
         await api.delete(id)
         if (isInitialized.value) {
-          items.value.items = items.value.items.filter(i => i.id !== id)
+          entities.value = entities.value.filter(i => i.id !== id)
         }
       } catch (err) {
         error.value = '삭제 중 오류가 발생했습니다.'
@@ -98,8 +117,9 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
 
     const reset = () => {
       isInitialized.value = false
-      items.value = {
-        items: [],
+      entities.value = []
+      initItems.value = {
+        itemIds: [],
         total: 0,
         page: 1,
         limit: 10,
@@ -109,6 +129,13 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
         offset: 0
       }
     }
+
+    const items = computed(() => {
+      return {
+        items: initItems.value.itemIds.map(id => entities.value.find(entity => entity.id === id)).filter((entity): entity is T => !!entity),
+        ...initItems.value
+      }
+    })
 
     return {
       items,

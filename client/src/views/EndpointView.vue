@@ -104,7 +104,7 @@
         <!-- 페이지네이션 -->
         <div v-if="endpointStore.items.totalPages > 0" class="flex items-center justify-between mt-4">
           <button
-            @click="loadEndpoints(endpointStore.items.page - 1)"
+            @click="loadEndpoints(endpointStore.items.page - 1, true)"
             :disabled="!endpointStore.items.hasPreviousPage"
             class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -114,7 +114,7 @@
             Page {{ endpointStore.items.page }} of {{ endpointStore.items.totalPages }}
           </span>
           <button
-            @click="loadEndpoints(endpointStore.items.page + 1)"
+            @click="loadEndpoints(endpointStore.items.page + 1, true)"
             :disabled="!endpointStore.items.hasNextPage"
             class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -499,7 +499,10 @@ onUnmounted(() => {
   document.removeEventListener('keydown', handleEscKey)
 })
 
-const loadEndpoints = async (page?: number) => {
+const loadEndpoints = async (page?: number, isReload = false) => {
+  if (isReload) {
+    endpointStore.reset()
+  }
   try {
     await endpointStore.loadItems({ page, limit: 10 })
   } catch (error) {
