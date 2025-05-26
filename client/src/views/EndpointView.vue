@@ -33,7 +33,7 @@
           </div>
         </div>
       </div>
-      <div v-else-if="endpoints.items.length === 0" class="py-12 text-center">
+      <div v-else-if="endpointStore.items.items.length === 0" class="py-12 text-center">
         <svg class="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
         </svg>
@@ -50,7 +50,7 @@
       </div>
 
       <div v-else class="space-y-6">
-        <div v-for="endpoint in endpoints.items" :key="endpoint.id" class="p-4 border rounded-lg">
+        <div v-for="endpoint in endpointStore.items.items" :key="endpoint.id" class="p-4 border rounded-lg">
           <div class="flex items-center justify-between">
             <div class="flex flex-col space-y-2">
               <div class="flex items-center space-x-2">
@@ -102,20 +102,20 @@
         </div>
 
         <!-- 페이지네이션 -->
-        <div v-if="endpoints.totalPages > 0" class="flex items-center justify-between mt-4">
+        <div v-if="endpointStore.items.totalPages > 0" class="flex items-center justify-between mt-4">
           <button
-            @click="loadEndpoints(endpoints.page - 1)"
-            :disabled="!endpoints.hasPreviousPage"
+            @click="loadEndpoints(endpointStore.items.page - 1)"
+            :disabled="!endpointStore.items.hasPreviousPage"
             class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Previous
           </button>
           <span class="text-sm text-gray-700">
-            Page {{ endpoints.page }} of {{ endpoints.totalPages }}
+            Page {{ endpointStore.items.page }} of {{ endpointStore.items.totalPages }}
           </span>
           <button
-            @click="loadEndpoints(endpoints.page + 1)"
-            :disabled="!endpoints.hasNextPage"
+            @click="loadEndpoints(endpointStore.items.page + 1)"
+            :disabled="!endpointStore.items.hasNextPage"
             class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Next
@@ -421,28 +421,7 @@ import ConfirmModal from '@/components/ConfirmModal.vue'
 import JsonEditor from '@/components/JsonEditor.vue'
 import { useEndpointStore } from '@/stores/endpoint'
 
-interface PaginatedResponse<T> {
-  items: T[]
-  total: number
-  page: number
-  limit: number
-  totalPages: number
-  hasNextPage: boolean
-  hasPreviousPage: boolean
-  offset: number
-}
-
 const endpointStore = useEndpointStore()
-const endpoints = ref<PaginatedResponse<Endpoint>>({
-  items: [],
-  total: 0,
-  page: 1,
-  limit: 10,
-  totalPages: 0,
-  hasNextPage: false,
-  hasPreviousPage: false,
-  offset: 0
-})
 const showModal = ref(false)
 const isEditing = ref(false)
 const editingEndpoint = ref<Partial<Endpoint>>({
@@ -522,22 +501,10 @@ onUnmounted(() => {
 
 const loadEndpoints = async (page?: number) => {
   try {
-    const response = await endpointStore.loadItems({ page, limit: 10 })
-    endpoints.value = response
+    await endpointStore.loadItems({ page, limit: 10 })
   } catch (error) {
     console.error('Failed to load endpoints:', error)
     alert('엔드포인트 목록을 불러오는 중 오류가 발생했습니다.')
-    // 에러 발생 시 빈 상태로 초기화
-    endpoints.value = {
-      items: [],
-      total: 0,
-      page: 1,
-      limit: 10,
-      totalPages: 0,
-      hasNextPage: false,
-      hasPreviousPage: false,
-      offset: 0
-    }
   }
 }
 
@@ -563,7 +530,7 @@ const confirmDeleteEndpoint = async () => {
 
   try {
     await endpointStore.deleteItem(deletingEndpointId.value)
-    endpoints.value.items = endpoints.value.items.filter(endpoint => endpoint.id !== deletingEndpointId.value)
+    endpointStore.items.items = endpointStore.items.items.filter(endpoint => endpoint.id !== deletingEndpointId.value)
     showDeleteModal.value = false
     deletingEndpointId.value = null
   } catch (error) {
@@ -619,9 +586,9 @@ const saveEndpoint = async () => {
         editingEndpoint.value.id,
         editingEndpoint.value
       )
-      const index = endpoints.value.items.findIndex(e => e.id === updatedEndpoint.id)
+      const index = endpointStore.items.items.findIndex(e => e.id === updatedEndpoint.id)
       if (index !== -1) {
-        endpoints.value.items[index] = updatedEndpoint
+        endpointStore.items.items[index] = updatedEndpoint
       }
     } else {
       await endpointStore.createItem(editingEndpoint.value)

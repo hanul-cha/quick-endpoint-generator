@@ -139,17 +139,7 @@ import { tableApi } from '../api/table'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 import TableEditModal from '@/components/TableEditModal.vue'
 import { useRouter } from 'vue-router'
-
-interface PaginatedResponse<T> {
-  items: T[]
-  total: number
-  page: number
-  limit: number
-  totalPages: number
-  hasNextPage: boolean
-  hasPreviousPage: boolean
-  offset: number
-}
+import { PaginatedResponse } from '@/api/pagination'
 
 const tables = ref<PaginatedResponse<DataTable>>({
   items: [],
