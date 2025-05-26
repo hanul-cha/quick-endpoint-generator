@@ -115,7 +115,7 @@
         </div>
 
         <!-- Data Loading state -->
-        <div v-if="rowStore.isLoading && !rowStore.isInitialized" class="space-y-4">
+        <div v-if="!rowStore.isInitialized" class="space-y-4">
           <div class="overflow-x-auto border rounded-md">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">

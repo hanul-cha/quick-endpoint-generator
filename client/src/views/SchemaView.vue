@@ -12,7 +12,7 @@
 
     <!-- 기존 테이블 목록 -->
     <div class="p-6 bg-white border border-gray-200 rounded-lg">
-      <div v-if="tableStore.isLoading && !tableStore.isInitialized" class="space-y-6">
+      <div v-if="!tableStore.isInitialized" class="space-y-6">
         <div v-for="n in 3" :key="n" class="flex items-center justify-between p-4 border rounded-lg animate-pulse bg-gray-50">
           <div class="flex items-center space-x-2">
             <div class="w-32 h-6 bg-gray-200 rounded"></div>

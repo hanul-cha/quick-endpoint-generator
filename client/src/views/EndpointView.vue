@@ -12,7 +12,7 @@
 
     <!-- 기존 엔드포인트 목록 -->
     <div class="p-6 bg-white border border-gray-200 rounded-lg">
-      <div v-if="endpointStore.isLoading && !endpointStore.isInitialized" class="space-y-6">
+      <div v-if="!endpointStore.isInitialized" class="space-y-6">
         <div v-for="n in 3" :key="n" class="p-4 border rounded-lg animate-pulse bg-gray-50">
           <div class="flex items-center justify-between">
             <div class="flex flex-col w-full space-y-2">
