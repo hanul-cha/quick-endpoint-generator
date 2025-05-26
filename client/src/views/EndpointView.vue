@@ -12,23 +12,23 @@
 
     <!-- 기존 엔드포인트 목록 -->
     <div class="p-6 bg-white border border-gray-200 rounded-lg">
-      <div v-if="isLoading" class="space-y-6">
+      <div v-if="endpointStore.isLoading && !endpointStore.isInitialized" class="space-y-6">
         <div v-for="n in 3" :key="n" class="p-4 border rounded-lg animate-pulse bg-gray-50">
           <div class="flex items-center justify-between">
-            <div class="flex flex-col space-y-2 w-full">
+            <div class="flex flex-col w-full space-y-2">
               <div class="flex items-center space-x-2">
-                <div class="h-6 w-1/4 bg-gray-200 rounded"></div>
-                <div class="h-5 w-12 bg-gray-200 rounded"></div>
+                <div class="w-1/4 h-6 bg-gray-200 rounded"></div>
+                <div class="w-12 h-5 bg-gray-200 rounded"></div>
               </div>
               <div class="flex items-center mt-2">
-                <div class="h-4 w-2/3 bg-gray-200 rounded"></div>
-                <div class="h-4 w-6 bg-gray-200 rounded ml-2"></div>
+                <div class="w-2/3 h-4 bg-gray-200 rounded"></div>
+                <div class="w-6 h-4 ml-2 bg-gray-200 rounded"></div>
               </div>
             </div>
-            <div class="flex space-x-2 ml-4">
-              <div class="h-8 w-20 bg-gray-200 rounded"></div>
-              <div class="h-8 w-12 bg-gray-200 rounded"></div>
-              <div class="h-8 w-12 bg-gray-200 rounded"></div>
+            <div class="flex ml-4 space-x-2">
+              <div class="w-20 h-8 bg-gray-200 rounded"></div>
+              <div class="w-12 h-8 bg-gray-200 rounded"></div>
+              <div class="w-12 h-8 bg-gray-200 rounded"></div>
             </div>
           </div>
         </div>
@@ -368,9 +368,9 @@
             <button
               @click="sendTestRequest"
               class="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
-              :disabled="isLoading"
+              :disabled="endpointStore.isLoading"
             >
-              <span v-if="isLoading" class="flex items-center">
+              <span v-if="endpointStore.isLoading" class="flex items-center">
                 <svg class="w-4 h-4 mr-2 animate-spin" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
@@ -420,6 +420,7 @@ import { endpointApi } from '@/api/endpoint'
 import CodeEditor from '@/components/CodeEditor.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 import JsonEditor from '@/components/JsonEditor.vue'
+import { useEndpointStore } from '@/stores/endpoint'
 
 interface PaginatedResponse<T> {
   items: T[]
@@ -432,6 +433,7 @@ interface PaginatedResponse<T> {
   offset: number
 }
 
+const endpointStore = useEndpointStore()
 const endpoints = ref<PaginatedResponse<Endpoint>>({
   items: [],
   total: 0,
@@ -519,12 +521,9 @@ onUnmounted(() => {
   document.removeEventListener('keydown', handleEscKey)
 })
 
-const isLoading = ref(false)
-
 const loadEndpoints = async (page?: number) => {
-  isLoading.value = true
   try {
-    const response = await endpointApi.getMyEndpoints({ page: page || 1 })
+    const response = await endpointStore.loadEndpoints(page)
     endpoints.value = response
   } catch (error) {
     console.error('Failed to load endpoints:', error)
@@ -540,8 +539,6 @@ const loadEndpoints = async (page?: number) => {
       hasPreviousPage: false,
       offset: 0
     }
-  } finally {
-    isLoading.value = false
   }
 }
 
@@ -566,7 +563,7 @@ const confirmDeleteEndpoint = async () => {
   if (!deletingEndpointId.value) return
 
   try {
-    await endpointApi.deleteEndpoint(deletingEndpointId.value)
+    await endpointStore.deleteEndpoint(deletingEndpointId.value)
     endpoints.value.items = endpoints.value.items.filter(endpoint => endpoint.id !== deletingEndpointId.value)
     showDeleteModal.value = false
     deletingEndpointId.value = null
@@ -619,7 +616,7 @@ const saveEndpoint = async () => {
 
   try {
     if (isEditing.value && editingEndpoint.value.id) {
-      const updatedEndpoint = await endpointApi.updateEndpoint(
+      const updatedEndpoint = await endpointStore.updateEndpoint(
         editingEndpoint.value.id,
         editingEndpoint.value
       )
@@ -628,8 +625,7 @@ const saveEndpoint = async () => {
         endpoints.value.items[index] = updatedEndpoint
       }
     } else {
-      const endpoint = await endpointApi.createEndpoint(editingEndpoint.value)
-      endpoints.value.items.unshift(endpoint)
+      await endpointStore.createEndpoint(editingEndpoint.value)
     }
     closeModal()
   } catch (error) {
@@ -819,15 +815,6 @@ const openCreateModal = () => {
 
 const showToast = ref(false)
 const toastMessage = ref('')
-
-const copyId = async (id: string) => {
-  try {
-    await navigator.clipboard.writeText(id)
-    showCopyToast('Copied')
-  } catch (e) {
-    alert('Failed to copy to clipboard.')
-  }
-}
 
 const showCopyToast = (msg: string) => {
   toastMessage.value = msg
