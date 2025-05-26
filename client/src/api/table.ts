@@ -1,32 +1,35 @@
 import { PaginatedResponse, PaginationOptions } from './pagination'
 
+import { ApiType } from '.'
 import type { DataTable } from '../types/data-table'
 import { api } from './client'
 
-export const tableApi = {
-  getTables: (options?: PaginationOptions) => {
-    const params = new URLSearchParams()
-    if (options?.page) params.append('page', options.page.toString())
-    if (options?.limit) params.append('limit', options.limit.toString())
-    return api.get<PaginatedResponse<DataTable>>(`/data-tables?${params.toString()}`)
-  },
-
-  getMyTables: (options?: PaginationOptions) => {
+class TableApi implements ApiType<DataTable> {
+  async pagination(options?: PaginationOptions) {
     const params = new URLSearchParams()
     if (options?.page) params.append('page', options.page.toString())
     if (options?.limit) params.append('limit', options.limit.toString())
     return api.get<PaginatedResponse<DataTable>>(`/data-tables/my?${params.toString()}`)
-  },
+  }
 
-  getTable: (tableId: string) =>
-    api.get<DataTable>(`/data-tables/${tableId}`),
+  async getItem(tableId: string) {
+    const response = await api.get<DataTable>(`/data-tables/${tableId}`)
+    return response
+  }
 
-  createTable: (table: Partial<DataTable>) =>
-    api.post<DataTable>('/data-tables', table),
+  async create(data: Partial<DataTable>) {
+    const response = await api.post<DataTable>('/data-tables', data)
+    return response
+  }
 
-  updateTable: (tableId: string, table: Partial<DataTable>) =>
-    api.put<DataTable>(`/data-tables/${tableId}`, table),
+  async update(id: string, data: Partial<DataTable>) {
+    const response = await api.put<DataTable>(`/data-tables/${id}`, data)
+    return response
+  }
 
-  deleteTable: (tableId: string) =>
-    api.delete<void>(`/data-tables/${tableId}`),
+  async delete(id: string) {
+    await api.delete<void>(`/data-tables/${id}`)
+  }
 }
+
+export const tableApi = new TableApi()

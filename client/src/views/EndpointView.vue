@@ -416,7 +416,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import type { Endpoint, Parameter, ParameterFieldWithKey, ParameterType } from '@/types/endpoint'
-import { endpointApi } from '@/api/endpoint'
 import CodeEditor from '@/components/CodeEditor.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 import JsonEditor from '@/components/JsonEditor.vue'
@@ -523,7 +522,7 @@ onUnmounted(() => {
 
 const loadEndpoints = async (page?: number) => {
   try {
-    const response = await endpointStore.loadEndpoints(page)
+    const response = await endpointStore.loadItems({ page, limit: 10 })
     endpoints.value = response
   } catch (error) {
     console.error('Failed to load endpoints:', error)
@@ -563,7 +562,7 @@ const confirmDeleteEndpoint = async () => {
   if (!deletingEndpointId.value) return
 
   try {
-    await endpointStore.deleteEndpoint(deletingEndpointId.value)
+    await endpointStore.deleteItem(deletingEndpointId.value)
     endpoints.value.items = endpoints.value.items.filter(endpoint => endpoint.id !== deletingEndpointId.value)
     showDeleteModal.value = false
     deletingEndpointId.value = null
@@ -616,7 +615,7 @@ const saveEndpoint = async () => {
 
   try {
     if (isEditing.value && editingEndpoint.value.id) {
-      const updatedEndpoint = await endpointStore.updateEndpoint(
+      const updatedEndpoint = await endpointStore.updateItem(
         editingEndpoint.value.id,
         editingEndpoint.value
       )
@@ -625,7 +624,7 @@ const saveEndpoint = async () => {
         endpoints.value.items[index] = updatedEndpoint
       }
     } else {
-      await endpointStore.createEndpoint(editingEndpoint.value)
+      await endpointStore.createItem(editingEndpoint.value)
     }
     closeModal()
   } catch (error) {

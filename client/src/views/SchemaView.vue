@@ -192,13 +192,13 @@ onUnmounted(() => {
 const handleTableSave = async (table: Partial<DataTable>) => {
   try {
     if (isEditing.value && table.id) {
-      const updatedTable = await tableApi.updateTable(table.id, table)
+      const updatedTable = await tableApi.update(table.id, table)
       const index = tables.value.items.findIndex(t => t.id === updatedTable.id)
       if (index !== -1) {
         tables.value.items[index] = updatedTable
       }
     } else {
-      const newTable = await tableApi.createTable(table)
+      const newTable = await tableApi.create(table)
       tables.value.items.unshift(newTable)
     }
   } catch (error) {
@@ -222,7 +222,7 @@ const confirmDeleteTable = async () => {
   if (!deletingTableId.value) return
 
   try {
-    await tableApi.deleteTable(deletingTableId.value)
+    await tableApi.delete(deletingTableId.value)
     tables.value.items = tables.value.items.filter(table => table.id !== deletingTableId.value)
     showDeleteModal.value = false
     deletingTableId.value = null
@@ -257,7 +257,7 @@ const navigateToTable = (tableId: string) => {
 const loadTables = async (page?: number) => {
   isLoading.value = true
   try {
-    tables.value = await tableApi.getMyTables({ page: page || 1 })
+    tables.value = await tableApi.pagination({ page: page || 1 })
   } catch (error) {
     console.error('Failed to load tables:', error)
     alert('An error occurred while loading the table list.')

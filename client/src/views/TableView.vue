@@ -457,7 +457,7 @@ const formErrors = ref<Record<string, string>>({})
 // Load table data
 const loadTable = async () => {
   try {
-    table.value = await tableApi.getTable(tableId.value)
+    table.value = await tableApi.getItem(tableId.value)
   } catch (error) {
     console.error('Failed to load table data:', error)
     showToastMessage('Failed to load table data.')
@@ -467,7 +467,7 @@ const loadTable = async () => {
 // Load row data
 const loadRows = async (page = 1) => {
   try {
-    rows.value = await rowApi.getRows(tableId.value, { page, limit: 10 })
+    rows.value = await rowApi.pagination({ page, limit: 10 }, tableId.value)
   } catch (error) {
     console.error('Failed to load row data:', error)
     showToastMessage('Failed to load row data.')
@@ -577,13 +577,16 @@ const saveRow = async () => {
 
     if (isEditMode.value && editingRow.value.id) {
       // Update row
-      await rowApi.updateRow(editingRow.value.id, {
+      await rowApi.update(editingRow.value.id, {
         values: values
       })
       showToastMessage('Data updated successfully.')
     } else {
       // Create new row
-      await rowApi.createRow(tableId.value, values)
+      await rowApi.create({
+        dataTableId: tableId.value,
+        values: values
+      })
       showToastMessage('New data added successfully.')
     }
 
@@ -654,7 +657,7 @@ const deleteRow = async () => {
   if (!deletingRowId.value) return
 
   try {
-    await rowApi.deleteRow(deletingRowId.value)
+    await rowApi.delete(deletingRowId.value)
 
     // Reload row data
     loadRows(rows.value.page)
@@ -747,7 +750,7 @@ const editTableStructure = () => {
 const handleTableSave = async (updatedTable: Partial<DataTable>) => {
   try {
     if (updatedTable.id) {
-      const result = await tableApi.updateTable(updatedTable.id, updatedTable)
+      const result = await tableApi.update(updatedTable.id, updatedTable)
       table.value = result
       showToastMessage('Table structure updated successfully.')
     }
