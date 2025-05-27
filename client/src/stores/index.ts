@@ -87,6 +87,7 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
         const newItem = await api.create(args[0], ...args.slice(1))
         entities.value.push(newItem)
         paginationMap.value.set(internalPaginationInfo.value.page, [newItem.id, ...paginationMap.value.get(internalPaginationInfo.value.page) ?? []])
+        total.value++
         return newItem
       } catch (err) {
         error.value = '생성 중 오류가 발생했습니다.'
@@ -117,12 +118,12 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
       error.value = null
       try {
         await api.delete(id)
-        const idx = entities.value.findIndex(i => i.id === id)
-        if (idx !== -1) entities.value.splice(idx, 1)
-
+        entities.value = entities.value.filter(entity => entity.id !== id)
         paginationMap.value.forEach((ids, page) => {
-          paginationMap.value.set(page, ids.filter(id => id !== id))
+          if (!ids.includes(id)) return
+          paginationMap.value.set(page, ids.filter((paginationId) => paginationId !== id))
         })
+        total.value--
       } catch (err) {
         error.value = '삭제 중 오류가 발생했습니다.'
         throw err
@@ -145,13 +146,19 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
 
     const pagination = computed((): PaginatedResponse<T> => {
       const itemIds = paginationMap.value.get(internalPaginationInfo.value.page) ?? []
+
+      const page = internalPaginationInfo.value.page
+      const limit = internalPaginationInfo.value.limit
+
+      const skip = (page - 1) * limit
+
       return {
         items: itemIds.map(id => entities.value.find(entity => entity.id === id)).filter((entity): entity is T => !!entity),
         total: total.value,
-        hasNextPage: itemIds.length === internalPaginationInfo.value.limit,
-        hasPreviousPage: internalPaginationInfo.value.page > 1,
-        offset: (internalPaginationInfo.value.page - 1) * internalPaginationInfo.value.limit,
-        totalPages: Math.ceil(total.value / (internalPaginationInfo.value.limit)),
+        hasNextPage: skip + itemIds.length < total.value,
+        hasPreviousPage: page > 1,
+        offset: skip,
+        totalPages: Math.ceil(total.value / limit),
         page: internalPaginationInfo.value.page,
         limit: internalPaginationInfo.value.limit,
       }

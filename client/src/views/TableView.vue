@@ -50,12 +50,6 @@
         </div>
         <div class="flex space-x-2">
           <button
-            @click="refreshData"
-            class="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
-          >
-            Refresh
-          </button>
-          <button
             @click="goToSchemaManagement"
             class="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
           >
@@ -461,12 +455,6 @@ const loadData = async () => {
   await loadRows()
 }
 
-// Refresh data
-const refreshData = () => {
-  loadData()
-  showToastMessage('Data refreshed successfully.')
-}
-
 // Edit row
 const editRow = (row: DataRow) => {
   // JSON 값 처리를 위한 복사본 생성
@@ -567,8 +555,6 @@ const saveRow = async () => {
       showToastMessage('New data added successfully.')
     }
 
-    // Reload row data
-    loadRows(rowStore.pagination.page)
     closeModal()
   } catch (error) {
     console.error('Failed to save data:', error)
@@ -636,8 +622,6 @@ const deleteRow = async () => {
   try {
     await rowStore.deleteItem(deletingRowId.value)
 
-    // Reload row data
-    loadRows(rowStore.pagination.page)
     showToastMessage('Data deleted successfully.')
   } catch (error) {
     console.error('Failed to delete data:', error)

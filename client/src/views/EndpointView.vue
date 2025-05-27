@@ -530,7 +530,6 @@ const confirmDeleteEndpoint = async () => {
 
   try {
     await endpointStore.deleteItem(deletingEndpointId.value)
-    endpointStore.pagination.items = endpointStore.pagination.items.filter(endpoint => endpoint.id !== deletingEndpointId.value)
     showDeleteModal.value = false
     deletingEndpointId.value = null
   } catch (error) {
@@ -582,14 +581,10 @@ const saveEndpoint = async () => {
 
   try {
     if (isEditing.value && editingEndpoint.value.id) {
-      const updatedEndpoint = await endpointStore.updateItem(
+      await endpointStore.updateItem(
         editingEndpoint.value.id,
         editingEndpoint.value
       )
-      const index = endpointStore.pagination.items.findIndex(e => e.id === updatedEndpoint.id)
-      if (index !== -1) {
-        endpointStore.pagination.items[index] = updatedEndpoint
-      }
     } else {
       await endpointStore.createItem(editingEndpoint.value)
     }
