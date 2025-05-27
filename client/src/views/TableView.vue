@@ -133,7 +133,7 @@
         </div>
 
         <!-- When no data is available -->
-        <div v-else-if="rowStore.items.items.length === 0" class="py-12 text-center">
+        <div v-else-if="rowStore.pagination.items.length === 0" class="py-12 text-center">
           <svg class="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
           </svg>
@@ -157,8 +157,8 @@
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
-                <tr v-for="(row, index) in rowStore.items.items" :key="row.id">
-                  <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">{{ index + 1 + (rowStore.items.page - 1) * rowStore.items.limit }}</td>
+                <tr v-for="(row, index) in rowStore.pagination.items" :key="row.id">
+                  <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">{{ index + 1 + (rowStore.pagination.page - 1) * rowStore.pagination.limit }}</td>
                   <td v-for="column in table?.columns" :key="column.id"
                     :class="[
                       'px-6 py-4 text-sm whitespace-nowrap relative',
@@ -198,20 +198,20 @@
           </div>
 
           <!-- Pagination -->
-          <div v-if="rowStore.items.totalPages > 0" class="flex items-center justify-between mt-4">
+          <div v-if="rowStore.pagination.totalPages > 0" class="flex items-center justify-between mt-4">
             <button
-              @click="loadRows(rowStore.items.page - 1, true)"
-              :disabled="!rowStore.items.hasPreviousPage"
+              @click="loadRows(rowStore.pagination.page - 1)"
+              :disabled="!rowStore.pagination.hasPreviousPage"
               class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Previous
             </button>
             <span class="text-sm text-gray-700">
-              Page {{ rowStore.items.page }} / {{ rowStore.items.totalPages }}
+              Page {{ rowStore.pagination.page }} / {{ rowStore.pagination.totalPages }}
             </span>
             <button
-              @click="loadRows(rowStore.items.page + 1, true)"
-              :disabled="!rowStore.items.hasNextPage"
+              @click="loadRows(rowStore.pagination.page + 1)"
+              :disabled="!rowStore.pagination.hasNextPage"
               class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Next
@@ -446,10 +446,7 @@ const loadTable = async () => {
 }
 
 // Load row data
-const loadRows = async (page = 1, isReload = false) => {
-  if (isReload) {
-    rowStore.reset()
-  }
+const loadRows = async (page = 1) => {
   try {
     await rowStore.loadItems({ page, limit: 10 }, tableId.value)
   } catch (error) {
@@ -571,7 +568,7 @@ const saveRow = async () => {
     }
 
     // Reload row data
-    loadRows(rowStore.items.page)
+    loadRows(rowStore.pagination.page)
     closeModal()
   } catch (error) {
     console.error('Failed to save data:', error)
@@ -640,7 +637,7 @@ const deleteRow = async () => {
     await rowStore.deleteItem(deletingRowId.value)
 
     // Reload row data
-    loadRows(rowStore.items.page)
+    loadRows(rowStore.pagination.page)
     showToastMessage('Data deleted successfully.')
   } catch (error) {
     console.error('Failed to delete data:', error)

@@ -24,7 +24,7 @@
           </div>
         </div>
       </div>
-      <div v-else-if="tableStore.items.items.length === 0" class="py-12 text-center">
+      <div v-else-if="tableStore.pagination.items.length === 0" class="py-12 text-center">
         <svg class="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
         </svg>
@@ -42,7 +42,7 @@
 
       <div v-else class="space-y-6">
         <div
-          v-for="table in tableStore.items.items"
+          v-for="table in tableStore.pagination.items"
           :key="table.id"
           class="p-4 border rounded-lg cursor-pointer hover:bg-gray-50"
           @click="navigateToTable(table.id)"
@@ -82,20 +82,20 @@
         </div>
 
         <!-- 페이지네이션 -->
-        <div v-if="tableStore.items.totalPages > 0" class="flex items-center justify-between mt-4">
+        <div v-if="tableStore.pagination.totalPages > 0" class="flex items-center justify-between mt-4">
           <button
-            @click="loadTables(tableStore.items.page - 1, true)"
-            :disabled="!tableStore.items.hasPreviousPage"
+            @click="loadTables(tableStore.pagination.page - 1)"
+            :disabled="!tableStore.pagination.hasPreviousPage"
             class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Previous
           </button>
           <span class="text-sm text-gray-700">
-            Page {{ tableStore.items.page }} of {{ tableStore.items.totalPages }}
+            Page {{ tableStore.pagination.page }} of {{ tableStore.pagination.totalPages }}
           </span>
           <button
-            @click="loadTables(tableStore.items.page + 1, true)"
-            :disabled="!tableStore.items.hasNextPage"
+            @click="loadTables(tableStore.pagination.page + 1)"
+            :disabled="!tableStore.pagination.hasNextPage"
             class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Next
@@ -231,10 +231,7 @@ const navigateToTable = (tableId: string) => {
   router.push(`/table/${tableId}`)
 }
 
-const loadTables = async (page?: number, isReload = false) => {
-  if (isReload) {
-    tableStore.reset()
-  }
+const loadTables = async (page?: number) => {
   try {
     await tableStore.loadItems({ page, limit: 10 })
   } catch (error) {

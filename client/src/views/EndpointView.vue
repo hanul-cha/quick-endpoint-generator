@@ -33,7 +33,7 @@
           </div>
         </div>
       </div>
-      <div v-else-if="endpointStore.items.items.length === 0" class="py-12 text-center">
+      <div v-else-if="endpointStore.pagination.items.length === 0" class="py-12 text-center">
         <svg class="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
         </svg>
@@ -50,7 +50,7 @@
       </div>
 
       <div v-else class="space-y-6">
-        <div v-for="endpoint in endpointStore.items.items" :key="endpoint.id" class="p-4 border rounded-lg">
+        <div v-for="endpoint in endpointStore.pagination.items" :key="endpoint.id" class="p-4 border rounded-lg">
           <div class="flex items-center justify-between">
             <div class="flex flex-col space-y-2">
               <div class="flex items-center space-x-2">
@@ -102,20 +102,20 @@
         </div>
 
         <!-- 페이지네이션 -->
-        <div v-if="endpointStore.items.totalPages > 0" class="flex items-center justify-between mt-4">
+        <div v-if="endpointStore.pagination.totalPages > 0" class="flex items-center justify-between mt-4">
           <button
-            @click="loadEndpoints(endpointStore.items.page - 1, true)"
-            :disabled="!endpointStore.items.hasPreviousPage"
+            @click="loadEndpoints(endpointStore.pagination.page - 1)"
+            :disabled="!endpointStore.pagination.hasPreviousPage"
             class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Previous
           </button>
           <span class="text-sm text-gray-700">
-            Page {{ endpointStore.items.page }} of {{ endpointStore.items.totalPages }}
+            Page {{ endpointStore.pagination.page }} of {{ endpointStore.pagination.totalPages }}
           </span>
           <button
-            @click="loadEndpoints(endpointStore.items.page + 1, true)"
-            :disabled="!endpointStore.items.hasNextPage"
+            @click="loadEndpoints(endpointStore.pagination.page + 1)"
+            :disabled="!endpointStore.pagination.hasNextPage"
             class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Next
@@ -499,10 +499,7 @@ onUnmounted(() => {
   document.removeEventListener('keydown', handleEscKey)
 })
 
-const loadEndpoints = async (page?: number, isReload = false) => {
-  if (isReload) {
-    endpointStore.reset()
-  }
+const loadEndpoints = async (page?: number) => {
   try {
     await endpointStore.loadItems({ page, limit: 10 })
   } catch (error) {
@@ -533,7 +530,7 @@ const confirmDeleteEndpoint = async () => {
 
   try {
     await endpointStore.deleteItem(deletingEndpointId.value)
-    endpointStore.items.items = endpointStore.items.items.filter(endpoint => endpoint.id !== deletingEndpointId.value)
+    endpointStore.pagination.items = endpointStore.pagination.items.filter(endpoint => endpoint.id !== deletingEndpointId.value)
     showDeleteModal.value = false
     deletingEndpointId.value = null
   } catch (error) {
@@ -589,9 +586,9 @@ const saveEndpoint = async () => {
         editingEndpoint.value.id,
         editingEndpoint.value
       )
-      const index = endpointStore.items.items.findIndex(e => e.id === updatedEndpoint.id)
+      const index = endpointStore.pagination.items.findIndex(e => e.id === updatedEndpoint.id)
       if (index !== -1) {
-        endpointStore.items.items[index] = updatedEndpoint
+        endpointStore.pagination.items[index] = updatedEndpoint
       }
     } else {
       await endpointStore.createItem(editingEndpoint.value)

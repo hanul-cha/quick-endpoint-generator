@@ -1,12 +1,8 @@
+import { PaginatedResponse, PaginationOptions } from '@/api/pagination'
 import { Ref, computed, ref } from 'vue'
 
 import { ApiType } from '@/api'
-import { PaginatedResponse } from '@/api/pagination'
 import { defineStore } from 'pinia'
-
-type StorePaginatedResponse = Omit<PaginatedResponse<any>, 'items'> & {
-  itemIds: string[]
-}
 
 export function createStore<T extends (Record<string, any> & { id: string }), Api extends ApiType<T> = ApiType<T>>(
   storeId: string,
@@ -14,33 +10,35 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
 ) {
   return defineStore(storeId, () => {
     const entities: Ref<T[]> = ref([])
-    const initItems: Ref<StorePaginatedResponse> = ref({
-      itemIds: [],
-      total: 0,
-      page: 1,
-      limit: 10,
-      totalPages: 0,
-      hasNextPage: false,
-      hasPreviousPage: false,
-      offset: 0
-    })
-    const initArgs: Ref<Parameters<Api['pagination']> | null> = ref(null)
 
     const isLoading = ref(false)
     const error = ref<string | null>(null)
     const isInitialized = ref(false)
-    const pagination = ref<any>(null)
+    const paginationMap = ref<Map<number, string[]>>(new Map())
+    const internalPaginationInfo = ref<Required<PaginationOptions>>({
+      page: 1,
+      limit: 10,
+    })
+    const total = ref(0)
 
     const loadItems = async (...args: Parameters<Api['pagination']>) => {
-      if (isInitialized.value) {
-        return items.value
+      const option = args[0]
+
+      if (option?.page) {
+        internalPaginationInfo.value = {
+          page: option.page,
+          limit: option.limit ?? internalPaginationInfo.value.limit
+        }
       }
 
-      initArgs.value = args
+      const hasThisPage = paginationMap.value.has(internalPaginationInfo.value.page)
 
-      const option = args[0] ?? {
-        page: 1,
-        limit: 10
+      if (isInitialized.value && hasThisPage) {
+        return pagination.value
+      }
+
+      if (!hasThisPage) {
+        isInitialized.value = false
       }
 
       const restArgs = args.slice(1)
@@ -49,14 +47,12 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
       error.value = null
 
       try {
-        const response = await api.pagination(option, ...restArgs)
-        entities.value = response.items
-        initItems.value = {
-          itemIds: response.items.map(item => item.id),
-          ...response
-        }
+        const response = await api.pagination(internalPaginationInfo.value, ...restArgs)
+        entities.value.push(...response.items)
+        paginationMap.value.set(internalPaginationInfo.value.page, response.items.map(item => item.id))
+        total.value = response.total
         isInitialized.value = true
-        return items.value
+        return pagination.value
       } catch (err) {
         error.value = 'Error loading items'
         throw err
@@ -89,12 +85,8 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
       error.value = null
       try {
         const newItem = await api.create(args[0], ...args.slice(1))
-        if (isInitialized.value) {
-          reset()
-          if (initArgs.value) {
-            loadItems(...initArgs.value)
-          }
-        }
+        entities.value.push(newItem)
+        paginationMap.value.set(internalPaginationInfo.value.page, [newItem.id, ...paginationMap.value.get(internalPaginationInfo.value.page) ?? []])
         return newItem
       } catch (err) {
         error.value = '생성 중 오류가 발생했습니다.'
@@ -109,10 +101,8 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
       error.value = null
       try {
         const updated = await api.update(args[0], args[1], ...args.slice(2))
-        if (isInitialized.value) {
-          const idx = entities.value.findIndex(i => i.id === updated.id)
-          if (idx !== -1) entities.value[idx] = updated
-        }
+        const idx = entities.value.findIndex(i => i.id === updated.id)
+        if (idx !== -1) entities.value[idx] = updated
         return updated
       } catch (err) {
         error.value = 'Error updating item'
@@ -127,12 +117,12 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
       error.value = null
       try {
         await api.delete(id)
-        if (isInitialized.value) {
-          reset()
-          if (initArgs.value) {
-            loadItems(...initArgs.value)
-          }
-        }
+        const idx = entities.value.findIndex(i => i.id === id)
+        if (idx !== -1) entities.value.splice(idx, 1)
+
+        paginationMap.value.forEach((ids, page) => {
+          paginationMap.value.set(page, ids.filter(id => id !== id))
+        })
       } catch (err) {
         error.value = '삭제 중 오류가 발생했습니다.'
         throw err
@@ -141,30 +131,33 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
       }
     }
 
-    const reset = () => {
-      isInitialized.value = false
-      entities.value = []
-      initItems.value = {
-        itemIds: [],
-        total: 0,
-        page: 1,
-        limit: 10,
-        totalPages: 0,
-        hasNextPage: false,
-        hasPreviousPage: false,
-        offset: 0
-      }
-    }
+    // const reset = () => {
+    //   isInitialized.value = false
+    //   entities.value = []
+    //   paginationResponseCache.value = {
+    //     total: 0,
+    //     hasNextPage: false,
+    //     hasPreviousPage: false,
+    //     offset: 0
+    //   }
+    //   paginationMap.value.clear()
+    // }
 
-    const items = computed(() => {
+    const pagination = computed((): PaginatedResponse<T> => {
+      const itemIds = paginationMap.value.get(internalPaginationInfo.value.page) ?? []
       return {
-        items: initItems.value.itemIds.map(id => entities.value.find(entity => entity.id === id)).filter((entity): entity is T => !!entity),
-        ...initItems.value
+        items: itemIds.map(id => entities.value.find(entity => entity.id === id)).filter((entity): entity is T => !!entity),
+        total: total.value,
+        hasNextPage: itemIds.length === internalPaginationInfo.value.limit,
+        hasPreviousPage: internalPaginationInfo.value.page > 1,
+        offset: (internalPaginationInfo.value.page - 1) * internalPaginationInfo.value.limit,
+        totalPages: Math.ceil(total.value / (internalPaginationInfo.value.limit)),
+        page: internalPaginationInfo.value.page,
+        limit: internalPaginationInfo.value.limit,
       }
     })
 
     return {
-      items,
       isLoading,
       error,
       isInitialized,
@@ -174,7 +167,6 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
       createItem,
       updateItem,
       deleteItem,
-      reset
     }
   })
 }
