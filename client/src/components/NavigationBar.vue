@@ -2,6 +2,13 @@
   <header class="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm">
     <nav class="flex items-center justify-between p-4 mx-auto max-w-7xl lg:px-8" aria-label="Global">
       <div class="flex lg:flex-1">
+        <a
+          href="https://quick-endpoint-generator-docs.vercel.app/index.html"
+          target="_blank"
+          class="text-sm font-semibold leading-6 text-gray-900 hover:text-blue-600"
+        >
+          Docs
+        </a>
       </div>
       <div class="flex gap-x-8">
         <a href="#" @click.prevent="showLogoutConfirm = true" class="text-sm font-semibold leading-6 text-gray-900 hover:text-blue-600">
