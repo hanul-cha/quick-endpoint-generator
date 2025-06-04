@@ -61,7 +61,7 @@
 </template>
 
 <script setup>
-import { api } from '@/api/client';
+import { authApi } from '@/api/auth';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -94,15 +94,15 @@ const handleSubmit = async () => {
 
   isLoading.value = true;
   try {
-    const data = await api.post('/auth/signup', {
+    const success = await authApi.register({
       email: formData.value.email,
       password: formData.value.password,
       name: formData.value.name
     });
 
-    if (data.access_token) {
+    if (success) {
       showToastMessage('Registration completed successfully.')
-      setTimeout(() => router.push('/login'), 1000)
+      router.push('/data/endpoint');
     } else {
       showToastMessage('Registration failed.')
     }

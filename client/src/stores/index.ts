@@ -164,6 +164,19 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
       }
     })
 
+    const resetStore = () => {
+      entities.value = []
+      paginationMap.value.clear()
+      internalPaginationInfo.value = {
+        page: 1,
+        limit: 10,
+      }
+      isInitialized.value = false
+      total.value = 0
+      error.value = null
+      isLoading.value = false
+    }
+
     return {
       isLoading,
       error,
@@ -174,6 +187,7 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
       createItem,
       updateItem,
       deleteItem,
+      resetStore,
     }
   })
 }

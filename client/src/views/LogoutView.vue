@@ -5,16 +5,14 @@
 </template>
 
 <script setup>
+import { authApi } from '@/api/auth';
 import { onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
 
 onMounted(() => {
-  // 로컬 스토리지에서 토큰 제거
-  localStorage.removeItem('token');
-
-  // 로그인 페이지로 리다이렉트
+  authApi.logout();
   router.push('/login');
 });
 </script>

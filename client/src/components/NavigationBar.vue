@@ -40,6 +40,7 @@ const showLogoutConfirm = ref(false);
 
 const logout = () => {
   showLogoutConfirm.value = false;
+  localStorage.removeItem('token');
   router.push('/logout');
 };
 </script>

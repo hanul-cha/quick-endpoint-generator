@@ -36,7 +36,7 @@
 </template>
 
 <script setup>
-import { api } from '@/api/client';
+import { authApi } from '@/api/auth';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -51,10 +51,9 @@ const isLoading = ref(false);
 const handleSubmit = async () => {
   isLoading.value = true;
   try {
-    const data = await api.post('/auth/signin', formData.value);
+    const success = await authApi.signin(formData.value);
 
-    if (data.access_token) {
-      localStorage.setItem('token', data.access_token);
+    if (success) {
       router.push('/data/endpoint');
     } else {
       alert('로그인에 실패했습니다.');
