@@ -52,11 +52,6 @@
         </div>
       </form>
     </div>
-    <transition name="fade">
-      <div v-if="showToast" class="fixed z-50 px-6 py-3 text-white transform -translate-x-1/2 bg-green-500 rounded shadow-lg bottom-8 left-1/2">
-        {{ toastMessage }}
-      </div>
-    </transition>
   </div>
 </template>
 
@@ -75,20 +70,9 @@ const formData = ref({
 
 const isLoading = ref(false);
 
-// Toast 상태 및 함수 추가
-const showToast = ref(false)
-const toastMessage = ref('')
-const showToastMessage = (message) => {
-  toastMessage.value = message
-  showToast.value = true
-  setTimeout(() => {
-    showToast.value = false
-  }, 3000)
-}
-
 const handleSubmit = async () => {
   if (formData.value.password !== formData.value.confirmPassword) {
-    showToastMessage('Passwords do not match.')
+    showToast({ message: 'Passwords do not match.', type: 'error' })
     return;
   }
 
@@ -101,14 +85,14 @@ const handleSubmit = async () => {
     });
 
     if (success) {
-      showToastMessage('Registration completed successfully.')
+      showToast({ message: 'Registration completed successfully.' })
       router.push('/data/endpoint');
     } else {
-      showToastMessage('Registration failed.')
+      showToast({ message: 'Registration failed.', type: 'error' })
     }
   } catch (error) {
     console.error('Registration error:', error);
-    showToastMessage('An error occurred during registration.')
+    showToast({ message: 'An error occurred during registration.', type: 'error' })
   } finally {
     isLoading.value = false;
   }

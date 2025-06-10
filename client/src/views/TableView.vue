@@ -355,13 +355,6 @@
       </div>
     </div>
 
-    <!-- Toast notification -->
-    <transition name="fade">
-      <div v-if="showToast" class="fixed z-50 px-6 py-3 text-white transform -translate-x-1/2 bg-green-500 rounded shadow-lg bottom-8 left-1/2">
-        {{ toastMessage }}
-      </div>
-    </transition>
-
     <!-- Custom tooltip -->
     <div
       v-if="tooltipVisible"
@@ -390,6 +383,7 @@ import JsonEditor from '@/components/JsonEditor.vue'
 import TableEditModal from '@/components/TableEditModal.vue'
 import { useTableStore } from '@/stores/table'
 import { useRowStore } from '@/stores/row'
+import { showToast } from '@/stores/toast'
 
 // Get route and table ID
 const route = useRoute()
@@ -408,8 +402,6 @@ const showRowModal = ref(false)
 const isEditMode = ref(false)
 const showDeleteModal = ref(false)
 const deletingRowId = ref<string | null>(null)
-const showToast = ref(false)
-const toastMessage = ref('')
 
 // Currently editing row
 const editingRow = ref<{
@@ -435,7 +427,7 @@ const loadTable = async () => {
     table.value = await tableStore.getItem(tableId.value)
   } catch (error) {
     console.error('Failed to load table data:', error)
-    showToastMessage('Failed to load table data.')
+    showToast({ message: 'Failed to load table data.', type: 'error' })
   }
 }
 
@@ -445,7 +437,7 @@ const loadRows = async (page = 1) => {
     await rowStore.loadItems({ page, limit: 10 }, tableId.value)
   } catch (error) {
     console.error('Failed to load row data:', error)
-    showToastMessage('Failed to load row data.')
+    showToast({ message: 'Failed to load row data.', type: 'error' })
   }
 }
 
@@ -545,20 +537,20 @@ const saveRow = async () => {
       await rowStore.updateItem(editingRow.value.id, {
         values: values
       })
-      showToastMessage('Data updated successfully.')
+      showToast({ message: 'Data updated successfully.' })
     } else {
       // Create new row
       await rowStore.createItem({
         dataTableId: tableId.value,
         values: values
       })
-      showToastMessage('New data added successfully.')
+      showToast({ message: 'New data added successfully.' })
     }
 
     closeModal()
   } catch (error) {
     console.error('Failed to save data:', error)
-    showToastMessage('Failed to save data.')
+    showToast({ message: 'Failed to save data.', type: 'error' })
   }
 }
 
@@ -622,23 +614,14 @@ const deleteRow = async () => {
   try {
     await rowStore.deleteItem(deletingRowId.value)
 
-    showToastMessage('Data deleted successfully.')
+    showToast({ message: 'Data deleted successfully.' })
   } catch (error) {
     console.error('Failed to delete data:', error)
-    showToastMessage('Failed to delete data.')
+    showToast({ message: 'Failed to delete data.', type: 'error' })
   } finally {
     showDeleteModal.value = false
     deletingRowId.value = null
   }
-}
-
-// Show toast message
-const showToastMessage = (message: string) => {
-  toastMessage.value = message
-  showToast.value = true
-  setTimeout(() => {
-    showToast.value = false
-  }, 3000)
 }
 
 // Format value
@@ -714,12 +697,12 @@ const handleTableSave = async (updatedTable: Partial<DataTable>) => {
       const result = await tableStore.updateItem(updatedTable.id, updatedTable)
       if (result) {
         table.value = result
-        showToastMessage('Table structure updated successfully.')
+        showToast({ message: 'Table structure updated successfully.' })
       }
     }
   } catch (error) {
     console.error('Failed to update table structure:', error)
-    showToastMessage('Failed to update table structure.')
+    showToast({ message: 'Failed to update table structure.', type: 'error' })
   } finally {
     showTableModal.value = false
   }
@@ -862,9 +845,9 @@ const goToSchemaManagement = () => {
 const copyId = async (id: string) => {
   try {
     await navigator.clipboard.writeText(id)
-    showToastMessage('ID copied to clipboard.')
+    showToast({ message: 'ID copied to clipboard.' })
   } catch (e) {
-    showToastMessage('Failed to copy to clipboard.')
+    showToast({ message: 'Failed to copy to clipboard.', type: 'error' })
   }
 }
 </script>

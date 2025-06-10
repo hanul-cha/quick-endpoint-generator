@@ -17,29 +17,30 @@
       </div>
     </nav>
   </header>
-
-  <ConfirmModal
-    v-model="showLogoutConfirm"
-    title="Logout"
-    message="Are you sure you want to logout?"
-    confirm-text="Logout"
-    cancel-text="Cancel"
-    confirm-button-color="bg-red-600"
-    confirm-button-hover-color="bg-red-700"
-    @confirm="logout"
-  />
 </template>
 
 <script setup>
+import { openConfirmModal } from '@/stores/modal';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import ConfirmModal from './ConfirmModal.vue';
 
 const router = useRouter();
-const showLogoutConfirm = ref(false);
+
+const showLogoutConfirm = async () => {
+  const result = await openConfirmModal({
+    title: 'Logout',
+    message: 'Are you sure you want to logout?',
+    confirmText: 'Logout',
+    cancelText: 'Cancel',
+    confirmButtonColor: 'bg-red-600',
+  });
+
+  if (result) {
+    logout();
+  }
+}
 
 const logout = () => {
-  showLogoutConfirm.value = false;
   localStorage.removeItem(import.meta.env.VITE_AUTH_TOKEN_KEY);
   router.push('/logout');
 };

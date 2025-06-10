@@ -3,6 +3,8 @@ import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import NavigationBar from './components/NavigationBar.vue';
 import WebSocketChat from './components/WebSocketChat.vue'
+import ConfirmModal from './components/ConfirmModal.vue';
+import ToastList from './components/ToastList.vue';
 
 const route = useRoute();
 const showNavigation = computed(() => {
@@ -17,6 +19,8 @@ const showNavigation = computed(() => {
       <router-view />
     </main>
   </div>
+  <ConfirmModal />
+  <ToastList />
 </template>
 
 <style>

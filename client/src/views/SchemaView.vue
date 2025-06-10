@@ -111,34 +111,17 @@
       :is-editing="isEditing"
       @save="handleTableSave"
     />
-
-    <!-- Toast 알림 -->
-    <transition name="fade">
-      <div v-if="showToast" class="fixed z-50 px-6 py-3 text-white transform -translate-x-1/2 bg-green-500 rounded shadow-lg bottom-8 left-1/2">
-        {{ toastMessage }}
-      </div>
-    </transition>
-
-    <!-- 삭제 확인 모달 -->
-    <ConfirmModal
-      v-model="showDeleteModal"
-      title="Confirm Deletion"
-      message="Are you sure you want to delete this table?"
-      confirm-text="Delete"
-      confirm-button-color="bg-red-600"
-      confirm-button-hover-color="bg-red-700"
-      @confirm="confirmDeleteTable"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import type { DataTable } from '../types/data-table'
-import ConfirmModal from '@/components/ConfirmModal.vue'
 import TableEditModal from '@/components/TableEditModal.vue'
 import { useRouter } from 'vue-router'
 import { useTableStore } from '@/stores/table'
+import { openConfirmModal } from '@/stores/modal'
+import { showToast } from '@/stores/toast'
 
 const tableStore = useTableStore()
 const showModal = ref(false)
@@ -148,11 +131,6 @@ const editingTable = ref<Partial<DataTable>>({
   columns: []
 })
 const router = useRouter()
-const showToast = ref(false)
-const toastMessage = ref('')
-
-const showDeleteModal = ref(false)
-const deletingTableId = ref<string | null>(null)
 
 const handleEscKey = (event: KeyboardEvent) => {
   if (event.key === 'Escape' && showModal.value) {
@@ -173,15 +151,15 @@ const handleTableSave = async (table: Partial<DataTable>) => {
   try {
     if (isEditing.value && table.id) {
       await tableStore.updateItem(table.id, table)
-      showToastMessage('Table updated successfully.')
+      showToast({ message: 'Table updated successfully.' })
     } else {
       await tableStore.createItem(table)
-      showToastMessage('Table created successfully.')
+      showToast({ message: 'Table created successfully.' })
     }
     closeModal()
   } catch (error) {
     console.error(`Failed to ${isEditing.value ? 'update' : 'create'} table:`, error)
-    showToastMessage(`Failed to ${isEditing.value ? 'update' : 'create'} table.`)
+    showToast({ message: `Failed to ${isEditing.value ? 'update' : 'create'} table.`, type: 'error' })
   }
 }
 
@@ -192,38 +170,31 @@ const editTable = (table: DataTable) => {
 }
 
 const deleteTable = async (tableId: string) => {
-  deletingTableId.value = tableId
-  showDeleteModal.value = true
-}
+  const result = await openConfirmModal({
+    title: 'Delete Table',
+    message: 'Are you sure you want to delete this table?',
+    confirmText: 'Delete',
+    cancelText: 'Cancel',
+    confirmButtonColor: 'bg-red-600',
+  })
 
-const confirmDeleteTable = async () => {
-  if (!deletingTableId.value) return
-
-  try {
-    await tableStore.deleteItem(deletingTableId.value)
-    showDeleteModal.value = false
-    deletingTableId.value = null
-    showToastMessage('Table deleted successfully.')
-  } catch (error) {
-    console.error('Failed to delete table:', error)
-    showToastMessage('Failed to delete table.')
+  if (result) {
+    try {
+      await tableStore.deleteItem(tableId)
+      showToast({ message: 'Table deleted successfully.' })
+    } catch (error) {
+      console.error('Failed to delete table:', error)
+      showToast({ message: 'Failed to delete table.', type: 'error' })
+    }
   }
-}
-
-const showToastMessage = (message: string) => {
-  toastMessage.value = message
-  showToast.value = true
-  setTimeout(() => {
-    showToast.value = false
-  }, 3000)
 }
 
 const copyId = async (id: string) => {
   try {
     await navigator.clipboard.writeText(id)
-    showToastMessage('ID copied to clipboard.')
+    showToast({ message: 'ID copied to clipboard.' })
   } catch (e) {
-    showToastMessage('Failed to copy to clipboard.')
+    showToast({ message: 'Failed to copy to clipboard.', type: 'error' })
   }
 }
 
@@ -236,7 +207,7 @@ const loadTables = async (page?: number) => {
     await tableStore.loadItems({ page, limit: 10 })
   } catch (error) {
     console.error('Failed to load tables:', error)
-    showToastMessage('Failed to load tables.')
+    showToast({ message: 'Failed to load tables.', type: 'error' })
   }
 }
 

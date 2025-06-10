@@ -393,23 +393,7 @@
       </div>
     </div>
 
-    <!-- Toast 알림 -->
-    <transition name="fade">
-      <div v-if="showToast" class="fixed z-50 px-6 py-3 text-white transform -translate-x-1/2 bg-green-500 rounded shadow-lg bottom-8 left-1/2">
-        {{ toastMessage }}
-      </div>
-    </transition>
-
     <!-- 삭제 확인 모달 -->
-    <ConfirmModal
-      v-model="showDeleteModal"
-      title="Confirm Deletion"
-      message="Are you sure you want to delete this endpoint?"
-      confirm-text="Delete"
-      confirm-button-color="bg-red-600"
-      confirm-button-hover-color="bg-red-700"
-      @confirm="confirmDeleteEndpoint"
-    />
   </div>
 </template>
 
@@ -417,9 +401,10 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import type { Endpoint, Parameter, ParameterFieldWithKey, ParameterType } from '@/types/endpoint'
 import CodeEditor from '@/components/CodeEditor.vue'
-import ConfirmModal from '@/components/ConfirmModal.vue'
 import JsonEditor from '@/components/JsonEditor.vue'
 import { useEndpointStore } from '@/stores/endpoint'
+import { openConfirmModal } from '@/stores/modal'
+import { showToast } from '@/stores/toast'
 
 const endpointStore = useEndpointStore()
 const showModal = ref(false)
@@ -515,26 +500,25 @@ const editEndpoint = (endpoint: Endpoint) => {
 }
 
 // 상태 변수 추가
-const showDeleteModal = ref(false)
-const deletingEndpointId = ref<string | null>(null)
 
 // 기존 deleteEndpoint 함수 수정
 const deleteEndpoint = async (endpointId: string) => {
-  deletingEndpointId.value = endpointId
-  showDeleteModal.value = true
-}
+  const result = await openConfirmModal({
+    title: 'Delete Endpoint',
+    message: 'Are you sure you want to delete this endpoint?',
+    confirmText: 'Delete',
+    cancelText: 'Cancel',
+    confirmButtonColor: 'bg-red-600',
+  })
 
-// 실제 삭제 함수 추가
-const confirmDeleteEndpoint = async () => {
-  if (!deletingEndpointId.value) return
-
-  try {
-    await endpointStore.deleteItem(deletingEndpointId.value)
-    showDeleteModal.value = false
-    deletingEndpointId.value = null
-  } catch (error) {
-    console.error('Failed to delete endpoint:', error)
-    alert('An error occurred while deleting the endpoint.')
+  if (result) {
+    try {
+      await endpointStore.deleteItem(endpointId)
+      showToast({ message: 'Endpoint deleted successfully.' })
+    } catch (error) {
+      console.error('Failed to delete endpoint:', error)
+      showToast({ message: 'Failed to delete endpoint.' })
+    }
   }
 }
 
@@ -774,16 +758,6 @@ const openCreateModal = () => {
   showModal.value = true
 }
 
-const showToast = ref(false)
-const toastMessage = ref('')
-
-const showCopyToast = (msg: string) => {
-  toastMessage.value = msg
-  showToast.value = true
-  setTimeout(() => {
-    showToast.value = false
-  }, 1500)
-}
 
 // 엔드포인트 URL 가져오기
 const getEndpointUrl = (endpointId: string): string => {
@@ -795,7 +769,7 @@ const copyEndpointUrl = async (endpointId: string) => {
   try {
     const url = getEndpointUrl(endpointId)
     await navigator.clipboard.writeText(url)
-    showCopyToast('URL Copied')
+    showToast({ message: 'URL Copied' })
   } catch (e) {
     alert('Failed to copy URL to clipboard.')
   }
