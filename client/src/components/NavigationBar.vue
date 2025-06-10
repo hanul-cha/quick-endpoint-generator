@@ -1,5 +1,5 @@
 <template>
-  <header class="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm">
+  <header class="fixed top-0 left-0 right-0 z-20 bg-white shadow-sm">
     <nav class="flex items-center justify-between p-4 mx-auto max-w-7xl lg:px-8" aria-label="Global">
       <div class="flex lg:flex-1">
         <a
@@ -29,7 +29,6 @@
 <script setup>
 import { validateAuthToken } from '@/stores';
 import { openConfirmModal } from '@/stores/modal';
-import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();

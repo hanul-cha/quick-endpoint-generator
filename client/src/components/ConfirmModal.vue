@@ -2,6 +2,7 @@
   <div
     v-if="isOpen"
     class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+    @click.self="handleClose"
   >
     <div class="w-full max-w-2xl p-6 bg-white border border-gray-200 rounded-lg">
       <div class="flex items-center justify-between mb-4">
@@ -39,7 +40,7 @@
 
 <script setup lang="ts">
 import { useConfirmModalStore } from '@/stores/modal'
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 
 const confirmModalStore = useConfirmModalStore()
 
@@ -50,4 +51,22 @@ const confirmText = computed(() => confirmModalStore.props?.confirmText ?? 'Conf
 const cancelText = computed(() => confirmModalStore.props?.cancelText ?? 'Cancel')
 const confirmButtonColor = computed(() => confirmModalStore.props?.confirmButtonColor ?? 'bg-indigo-600')
 const confirmButtonHoverColor = computed(() => confirmModalStore.props?.confirmButtonHoverColor ?? 'bg-indigo-700')
+
+const handleClose = () => {
+  confirmModalStore.onConfirm?.(false)
+}
+
+const handleKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'Escape') {
+    handleClose()
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
 </script>
