@@ -7,10 +7,18 @@ import { isTokenExpired } from '@/router/isTokenExpired'
 import { openConfirmModal } from './modal'
 import router from '@/router'
 
-export async function validateAuthToken(skipConfirm?: boolean): Promise<boolean> {
+export function validateAuthToken(): boolean {
   const token = localStorage.getItem(import.meta.env.VITE_AUTH_TOKEN_KEY)
 
   if (token && !isTokenExpired(token)) {
+    return true
+  }
+
+  return false
+}
+
+export async function validateAuthTokenAndPushLoginPage(skipConfirm?: boolean): Promise<boolean> {
+  if (validateAuthToken()) {
     return true
   }
 
@@ -52,7 +60,7 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
     const total = ref(0)
 
     const loadItems = async (...args: Parameters<Api['pagination']>) => {
-      const isAuthenticated = await validateAuthToken(true)
+      const isAuthenticated = await validateAuthTokenAndPushLoginPage(true)
 
       if (!isAuthenticated) {
         entities.value = dummyData
@@ -104,7 +112,7 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
     }
 
     const getItem = async (id: string) => {
-      const isAuthenticated = await validateAuthToken(true)
+      const isAuthenticated = await validateAuthTokenAndPushLoginPage(true)
 
       if (!isAuthenticated) {
         const findIdx = dummyData.findIndex(i => i.id === id)
@@ -131,7 +139,7 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
     }
 
     const createItem = async (...args: Parameters<Api['create']>) => {
-      const isAuthenticated = await validateAuthToken()
+      const isAuthenticated = await validateAuthTokenAndPushLoginPage()
       if (!isAuthenticated) return
 
       isLoading.value = true
@@ -152,7 +160,7 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
     }
 
     const updateItem = async (...args: Parameters<Api['update']>) => {
-      const isAuthenticated = await validateAuthToken()
+      const isAuthenticated = await validateAuthTokenAndPushLoginPage()
       if (!isAuthenticated) return
 
       isLoading.value = true
@@ -171,7 +179,7 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
     }
 
     const deleteItem = async (id: string) => {
-      const isAuthenticated = await validateAuthToken()
+      const isAuthenticated = await validateAuthTokenAndPushLoginPage()
       if (!isAuthenticated) return
 
       isLoading.value = true

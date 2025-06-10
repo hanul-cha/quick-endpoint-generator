@@ -405,6 +405,7 @@ import JsonEditor from '@/components/JsonEditor.vue'
 import { useEndpointStore } from '@/stores/endpoint'
 import { openConfirmModal } from '@/stores/modal'
 import { showToast } from '@/stores/toast'
+import { validateAuthTokenAndPushLoginPage } from '@/stores'
 
 const endpointStore = useEndpointStore()
 const showModal = ref(false)
@@ -684,6 +685,11 @@ const sendTestRequest = async () => {
     // POST, PUT 메소드의 경우 body에 파라미터 전송
     if (method === 'POST' || method === 'PUT') {
       requestOptions.body = JSON.stringify(params)
+    }
+
+    const isValidateAuthToken = await validateAuthTokenAndPushLoginPage();
+    if (!isValidateAuthToken) {
+      return
     }
 
     const response = await fetch(url, requestOptions)

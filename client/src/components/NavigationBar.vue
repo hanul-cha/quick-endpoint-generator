@@ -11,15 +11,23 @@
         </a>
       </div>
       <div class="flex gap-x-8">
-        <a href="#" @click.prevent="showLogoutConfirm()" class="text-sm font-semibold leading-6 text-gray-900 hover:text-blue-600">
-          Logout
-        </a>
+        <template v-if="isValidateAuthToken">
+          <a href="#" @click.prevent="showLogoutConfirm()" class="text-sm font-semibold leading-6 text-gray-900 hover:text-blue-600">
+            Logout
+          </a>
+        </template>
+        <template v-else>
+          <a href="#" @click.prevent="toLogin()" class="text-sm font-semibold leading-6 text-gray-900 hover:text-blue-600">
+            Login
+          </a>
+        </template>
       </div>
     </nav>
   </header>
 </template>
 
 <script setup>
+import { validateAuthToken } from '@/stores';
 import { openConfirmModal } from '@/stores/modal';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
@@ -39,6 +47,12 @@ const showLogoutConfirm = async () => {
     logout();
   }
 }
+
+const isValidateAuthToken = validateAuthToken();
+
+const toLogin = () => {
+  router.push('/login');
+};
 
 const logout = () => {
   localStorage.removeItem(import.meta.env.VITE_AUTH_TOKEN_KEY);

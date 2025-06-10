@@ -8,7 +8,7 @@ export const useEndpointStore = createStore<Endpoint>('endpoint', endpointApi, [
     name: 'Find all table',
     userId: 1,
     script: `function main(params, repo) {
-return repo.table.find()
+  return repo.table.find()
 }`,
     method: 'GET',
     parameter: {},
@@ -20,7 +20,7 @@ return repo.table.find()
     name: 'Create table',
     userId: 1,
     script: `function main(params, repo) {
-return repo.table.create({
+  return repo.table.create({
   name: params.name
 })
 }`,
@@ -34,7 +34,7 @@ return repo.table.create({
     name: 'Delete table',
     userId: 1,
     script: `function main(params, repo) {
-return repo.table.delete({ id: params.id })
+  return repo.table.delete({ id: params.id })
 }`,
     method: 'DELETE',
     parameter: { id: { type: 'String', required: true } },
@@ -46,7 +46,7 @@ return repo.table.delete({ id: params.id })
     name: 'Update table',
     userId: 1,
     script: `function main(params, repo) {
-return repo.table.update(params.id, { name: params.name })
+  return repo.table.update(params.id, { name: params.name })
 }`,
     method: 'PUT',
     parameter: {
@@ -61,12 +61,14 @@ return repo.table.update(params.id, { name: params.name })
     name: 'Create row',
     userId: 1,
     script: `function main(params, repo) {
-repo.row.create({
-  dataTableId: 'Default_table',
-  values: {
-    '1': params.title
-  }
-})
+  const row = await repo.row.create({
+    dataTableId: 'Default_table',
+    values: {
+      '1': params.title
+    }
+  })
+
+  return row
 }`,
     method: 'POST',
     parameter: {
@@ -80,7 +82,7 @@ repo.row.create({
     name: 'Delete row',
     userId: 1,
     script: `function main(params, repo) {
-repo.row.delete({ id: params.rowId })
+  return repo.row.delete({ id: params.rowId })
 }`,
     method: 'DELETE',
     parameter: {
@@ -94,11 +96,11 @@ repo.row.delete({ id: params.rowId })
     name: 'Update row title',
     userId: 1,
     script: `async function main(params, repo) {
-const updateData = {
-  id: params.id,
-  '1': params.title,
-}
-await repo.row.updateByEntities([updateData])
+  const updateData = {
+    id: params.id,
+    '1': params.title,
+  }
+  await repo.row.updateByEntities([updateData])
 }`,
     method: 'PUT',
     parameter: {
@@ -113,11 +115,11 @@ await repo.row.updateByEntities([updateData])
     name: 'Update all row count',
     userId: 1,
     script: `async function main(params, repo) {
-await repo.row.updateByWhere({
-  dataTableId: params.tableId
-}, {
-  '2': params.count
-})
+  await repo.row.updateByWhere({
+    dataTableId: params.tableId
+  }, {
+    '2': params.count
+  })
 }`,
     method: 'PUT',
     parameter: {
