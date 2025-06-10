@@ -1,10 +1,10 @@
 <template>
-  <div class="fixed z-50 top-4 right-4">
+  <div class="fixed z-50 flex flex-col items-end top-4 right-4">
     <TransitionGroup name="toast">
       <div
         v-for="toast in toasts"
         :key="toast.message"
-        class="p-4 mb-2 rounded-lg shadow-lg"
+        class="p-4 mb-2 rounded-lg shadow-lg max-w-[400px] text-right"
         :class="{
           'bg-green-500 text-white': toast.type === 'success' || !toast.type,
           'bg-red-500 text-white': toast.type === 'error'
