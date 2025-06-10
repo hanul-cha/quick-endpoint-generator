@@ -21,8 +21,8 @@ export const useEndpointStore = createStore<Endpoint>('endpoint', endpointApi, [
     userId: 1,
     script: `function main(params, repo) {
   return repo.table.create({
-  name: params.name
-})
+    name: params.name
+  })
 }`,
     method: 'POST',
     parameter: { name: { type: 'String', required: true } },

@@ -17,13 +17,9 @@ export function validateAuthToken(): boolean {
   return false
 }
 
-export async function validateAuthTokenAndPushLoginPage(skipConfirm?: boolean): Promise<boolean> {
+export async function validateAuthTokenAndPushLoginPage(): Promise<boolean> {
   if (validateAuthToken()) {
     return true
-  }
-
-  if (skipConfirm) {
-    return false
   }
 
   const result = await openConfirmModal({
@@ -41,7 +37,13 @@ export async function validateAuthTokenAndPushLoginPage(skipConfirm?: boolean): 
   return false
 }
 
-export function createStore<T extends (Record<string, any> & { id: string }), Api extends ApiType<T> = ApiType<T>>(
+interface DefaultEntity {
+  id: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export function createStore<T extends (Record<string, any> & DefaultEntity), Api extends ApiType<T> = ApiType<T>>(
   storeId: string,
   api: Api,
   dummyData: T[] = []
@@ -60,7 +62,7 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
     const total = ref(0)
 
     const loadItems = async (...args: Parameters<Api['pagination']>) => {
-      const isAuthenticated = await validateAuthTokenAndPushLoginPage(true)
+      const isAuthenticated = validateAuthToken()
 
       if (!isAuthenticated) {
         entities.value = dummyData
@@ -111,12 +113,12 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
       }
     }
 
-    const getItem = async (id: string) => {
-      const isAuthenticated = await validateAuthTokenAndPushLoginPage(true)
+    const getItem = async (id: string): Promise<T | null> => {
+      const isAuthenticated = validateAuthToken()
 
       if (!isAuthenticated) {
         const findIdx = dummyData.findIndex(i => i.id === id)
-        if (findIdx === -1) return
+        if (findIdx === -1) return null
         return dummyData[findIdx]
       }
 
@@ -139,14 +141,32 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
     }
 
     const createItem = async (...args: Parameters<Api['create']>) => {
-      const isAuthenticated = await validateAuthTokenAndPushLoginPage()
-      if (!isAuthenticated) return
+      const isAuthenticated = validateAuthToken()
+
+      const newData = args[0]
+
+      if (!isAuthenticated) {
+        const newId = Math.random().toString(36).substring(2, 15)
+        const updatedData = {
+          ...newData,
+          id: newId,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        } as T
+
+        entities.value.push(updatedData)
+
+        paginationMap.value.set(internalPaginationInfo.value.page, [newId, ...paginationMap.value.get(internalPaginationInfo.value.page) ?? []])
+        total.value++
+
+        return updatedData
+      }
 
       isLoading.value = true
       error.value = null
 
       try {
-        const newItem = await api.create(args[0], ...args.slice(1))
+        const newItem = await api.create(newData, ...args.slice(1))
         entities.value.push(newItem)
         paginationMap.value.set(internalPaginationInfo.value.page, [newItem.id, ...paginationMap.value.get(internalPaginationInfo.value.page) ?? []])
         total.value++
@@ -159,14 +179,32 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
       }
     }
 
-    const updateItem = async (...args: Parameters<Api['update']>) => {
-      const isAuthenticated = await validateAuthTokenAndPushLoginPage()
-      if (!isAuthenticated) return
+    const updateItem = async (...args: Parameters<Api['update']>): Promise<T> => {
+      const isAuthenticated = validateAuthToken()
+
+      const targetId = args[0]
+      const newData = args[1]
+
+      if (!isAuthenticated) {
+        const idx = entities.value.findIndex(i => i.id === targetId)
+        if (idx === -1) {
+          return newData as T
+        }
+
+        const originalData = entities.value[idx]
+
+        const updated = Object.assign({}, originalData, newData)
+        updated.updatedAt = new Date()
+
+        entities.value[idx] = updated
+
+        return updated
+      }
 
       isLoading.value = true
       error.value = null
       try {
-        const updated = await api.update(args[0], args[1], ...args.slice(2))
+        const updated = await api.update(targetId, newData, ...args.slice(2))
         const idx = entities.value.findIndex(i => i.id === updated.id)
         if (idx !== -1) entities.value[idx] = updated
         return updated
@@ -179,13 +217,15 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
     }
 
     const deleteItem = async (id: string) => {
-      const isAuthenticated = await validateAuthTokenAndPushLoginPage()
-      if (!isAuthenticated) return
+      const isAuthenticated = validateAuthToken()
 
       isLoading.value = true
       error.value = null
       try {
-        await api.delete(id)
+        if (isAuthenticated) {
+          await api.delete(id)
+        }
+
         entities.value = entities.value.filter(entity => entity.id !== id)
         paginationMap.value.forEach((ids, page) => {
           if (!ids.includes(id)) return

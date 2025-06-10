@@ -157,7 +157,7 @@
                     :class="[
                       'px-6 py-4 text-sm whitespace-nowrap relative',
                       shouldHighlightValue(column, row.values[column.id])
-                        ? 'bg-red-50 text-red-900 font-medium cursor-help'
+                        ? 'bg-red-50 text-red-900 font-medium cursor-help border-l-2 border-red-500'
                         : 'text-gray-900'
                     ]"
                     @mouseenter="showTooltip($event, column, row.values[column.id])"
