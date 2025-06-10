@@ -7,16 +7,15 @@ import { isTokenExpired } from '@/router/isTokenExpired'
 import { openConfirmModal } from './modal'
 import router from '@/router'
 
-async function validateAuthToken(fallback?: () => void) {
+export async function validateAuthToken(skipConfirm?: boolean): Promise<boolean> {
   const token = localStorage.getItem(import.meta.env.VITE_AUTH_TOKEN_KEY)
 
   if (token && !isTokenExpired(token)) {
-    return
+    return true
   }
 
-  if (fallback) {
-    fallback()
-    return
+  if (skipConfirm) {
+    return false
   }
 
   const result = await openConfirmModal({
@@ -30,11 +29,14 @@ async function validateAuthToken(fallback?: () => void) {
   if (result) {
     router.push('/login')
   }
+
+  return false
 }
 
 export function createStore<T extends (Record<string, any> & { id: string }), Api extends ApiType<T> = ApiType<T>>(
   storeId: string,
-  api: Api
+  api: Api,
+  dummyData: T[] = []
 ) {
   return defineStore(storeId, () => {
     const entities: Ref<T[]> = ref([])
@@ -50,6 +52,18 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
     const total = ref(0)
 
     const loadItems = async (...args: Parameters<Api['pagination']>) => {
+      const isAuthenticated = await validateAuthToken(true)
+
+      if (!isAuthenticated) {
+        entities.value = dummyData
+        isInitialized.value = true
+
+        paginationMap.value.set(internalPaginationInfo.value.page, dummyData.map(item => item.id))
+        total.value = dummyData.length
+
+        return
+      }
+
       const option = args[0]
 
       if (option?.page) {
@@ -90,6 +104,14 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
     }
 
     const getItem = async (id: string) => {
+      const isAuthenticated = await validateAuthToken(true)
+
+      if (!isAuthenticated) {
+        const findIdx = dummyData.findIndex(i => i.id === id)
+        if (findIdx === -1) return
+        return dummyData[findIdx]
+      }
+
       const findIdx = entities.value.findIndex(i => i.id === id)
       if (findIdx !== -1) {
         return entities.value[findIdx]
@@ -109,7 +131,8 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
     }
 
     const createItem = async (...args: Parameters<Api['create']>) => {
-      await validateAuthToken()
+      const isAuthenticated = await validateAuthToken()
+      if (!isAuthenticated) return
 
       isLoading.value = true
       error.value = null
@@ -129,7 +152,8 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
     }
 
     const updateItem = async (...args: Parameters<Api['update']>) => {
-      await validateAuthToken()
+      const isAuthenticated = await validateAuthToken()
+      if (!isAuthenticated) return
 
       isLoading.value = true
       error.value = null
@@ -147,7 +171,8 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
     }
 
     const deleteItem = async (id: string) => {
-      await validateAuthToken()
+      const isAuthenticated = await validateAuthToken()
+      if (!isAuthenticated) return
 
       isLoading.value = true
       error.value = null

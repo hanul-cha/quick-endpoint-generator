@@ -11,7 +11,7 @@
         </a>
       </div>
       <div class="flex gap-x-8">
-        <a href="#" @click.prevent="showLogoutConfirm = true" class="text-sm font-semibold leading-6 text-gray-900 hover:text-blue-600">
+        <a href="#" @click.prevent="showLogoutConfirm()" class="text-sm font-semibold leading-6 text-gray-900 hover:text-blue-600">
           Logout
         </a>
       </div>
