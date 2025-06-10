@@ -3,13 +3,33 @@ import { Ref, computed, ref } from 'vue'
 
 import { ApiType } from '@/api'
 import { defineStore } from 'pinia'
+import { isTokenExpired } from '@/router/isTokenExpired'
+import { openConfirmModal } from './modal'
+import router from '@/router'
 
-function validateAuthToken() {
+async function validateAuthToken(fallback?: () => void) {
   const token = localStorage.getItem(import.meta.env.VITE_AUTH_TOKEN_KEY)
-  if (!token) {
-    throw new Error('No token found')
+
+  if (token && !isTokenExpired(token)) {
+    return
   }
-  return token
+
+  if (fallback) {
+    fallback()
+    return
+  }
+
+  const result = await openConfirmModal({
+    title: 'Login Required',
+    message: 'A service that requires login. Would you like to go to the login page?',
+    confirmText: 'Login',
+    cancelText: 'Cancel',
+    confirmButtonColor: 'bg-blue-500',
+  })
+
+  if (result) {
+    router.push('/login')
+  }
 }
 
 export function createStore<T extends (Record<string, any> & { id: string }), Api extends ApiType<T> = ApiType<T>>(
@@ -89,6 +109,8 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
     }
 
     const createItem = async (...args: Parameters<Api['create']>) => {
+      await validateAuthToken()
+
       isLoading.value = true
       error.value = null
 
@@ -107,6 +129,8 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
     }
 
     const updateItem = async (...args: Parameters<Api['update']>) => {
+      await validateAuthToken()
+
       isLoading.value = true
       error.value = null
       try {
@@ -123,6 +147,8 @@ export function createStore<T extends (Record<string, any> & { id: string }), Ap
     }
 
     const deleteItem = async (id: string) => {
+      await validateAuthToken()
+
       isLoading.value = true
       error.value = null
       try {

@@ -1,10 +1,10 @@
 import { PaginatedResponse, PaginationOptions } from './pagination'
 
-import { ApiType } from '.'
+import { DefaultApi } from '.'
 import type { Endpoint } from '@/types/endpoint'
 import { api } from './client'
 
-class EndpointApi implements ApiType<Endpoint> {
+class EndpointApi extends DefaultApi<Endpoint> {
   async pagination(params: PaginationOptions = {}): Promise<PaginatedResponse<Endpoint>> {
     const searchParams = new URLSearchParams()
     if (params.page) searchParams.append('page', params.page.toString())

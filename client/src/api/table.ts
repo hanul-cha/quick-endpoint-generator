@@ -1,10 +1,10 @@
 import { PaginatedResponse, PaginationOptions } from './pagination'
 
-import { ApiType } from '.'
 import type { DataTable } from '../types/data-table'
+import { DefaultApi } from '.'
 import { api } from './client'
 
-class TableApi implements ApiType<DataTable> {
+class TableApi extends DefaultApi<DataTable> {
   async pagination(options?: PaginationOptions) {
     const params = new URLSearchParams()
     if (options?.page) params.append('page', options.page.toString())

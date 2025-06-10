@@ -1,10 +1,10 @@
 import { PaginatedResponse, PaginationOptions } from './pagination'
 
-import { ApiType } from '.'
 import type { DataRow } from '@/types/data-row'
+import { DefaultApi } from '.'
 import { api } from './client'
 
-class RowApi implements ApiType<DataRow> {
+class RowApi extends DefaultApi<DataRow> {
   async pagination(params: PaginationOptions = {}, tableId: string): Promise<PaginatedResponse<DataRow>> {
     const searchParams = new URLSearchParams()
     if (params.page) searchParams.append('page', params.page.toString())
