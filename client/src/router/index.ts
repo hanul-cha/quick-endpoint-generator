@@ -79,12 +79,14 @@ const isTokenExpired = (token: string): boolean => {
 }
 
 // 네비게이션 가드
-router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem('token')
+router.beforeEach((to, _from, next) => {
+  const token = localStorage.getItem(import.meta.env.VITE_AUTH_TOKEN_KEY)
+
+  const isLoginPage = to.path === '/login' || to.path === '/register'
 
   // 로그인이 필요한 라우트이고 토큰이 없거나 만료된 경우
-  if (to.meta.requiresAuth && (!token || isTokenExpired(token))) {
-    localStorage.removeItem('token') // 만료된 토큰 제거
+  if (!isLoginPage && token && isTokenExpired(token)) {
+    localStorage.removeItem(import.meta.env.VITE_AUTH_TOKEN_KEY) // 만료된 토큰 제거
     next('/login')
   } else {
     next()

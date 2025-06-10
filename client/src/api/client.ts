@@ -12,7 +12,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   }
 
   if (token) {
-    const authToken = localStorage.getItem('token')
+    const authToken = localStorage.getItem(import.meta.env.VITE_AUTH_TOKEN_KEY)
     if (authToken) {
       headers['Authorization'] = `Bearer ${authToken}`
     }

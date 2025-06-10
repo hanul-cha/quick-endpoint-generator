@@ -16,7 +16,7 @@ const storeList = [
 class AuthApi {
   private setToken(response: TokenResponse): boolean {
     if (response?.access_token) {
-      localStorage.setItem('token', response.access_token)
+      localStorage.setItem(import.meta.env.VITE_AUTH_TOKEN_KEY, response.access_token)
       return true
     }
 
@@ -47,7 +47,7 @@ class AuthApi {
   }
 
   logout() {
-    localStorage.removeItem('token')
+    localStorage.removeItem(import.meta.env.VITE_AUTH_TOKEN_KEY)
     this.resetStore()
   }
 }

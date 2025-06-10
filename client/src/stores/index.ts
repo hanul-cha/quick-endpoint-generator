@@ -4,6 +4,18 @@ import { Ref, computed, ref } from 'vue'
 import { ApiType } from '@/api'
 import { defineStore } from 'pinia'
 
+function getAuthToken() {
+  const token = localStorage.getItem(import.meta.env.VITE_AUTH_TOKEN_KEY)
+  if (!token) {
+    throw new Error('No token found')
+  }
+  return token
+}
+
+function getStoreStorage(storeId: string) {
+  return localStorage.getItem(`${storeId}-store-token`)
+}
+
 export function createStore<T extends (Record<string, any> & { id: string }), Api extends ApiType<T> = ApiType<T>>(
   storeId: string,
   api: Api

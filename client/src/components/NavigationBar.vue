@@ -40,7 +40,7 @@ const showLogoutConfirm = ref(false);
 
 const logout = () => {
   showLogoutConfirm.value = false;
-  localStorage.removeItem('token');
+  localStorage.removeItem(import.meta.env.VITE_AUTH_TOKEN_KEY);
   router.push('/logout');
 };
 </script>
